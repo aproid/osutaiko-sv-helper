@@ -1,0 +1,24 @@
+{
+  "name": "osutaiko-sv-helper",
+  "version": "1.0.0",
+  "description": "Simple utility for adjusting slider velocity on osu!taiko mapping",
+  "main": "main.js",
+  "author": "oL0",
+  "license": "MIT",
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^13.4.0"
+  },
+  "scripts": {
+    "start": "cross-env NODE_ENV=development electron .",
+    "build:win32": "npx electron-builder --win portable --ia32",
+    "build:win64": "npx electron-builder --win portable --x64"
+  },
+  "dependencies": {
+    "moment": "^2.29.1"
+  },
+  "build": {
+    "appId": "osu.helper.sv",
+    "productName": "osu!taiko SV Helper"
+  }
+}

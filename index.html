@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+		<meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+		<link rel="stylesheet" href="./css/boxicons.min.css">
+		<link rel="stylesheet" href="./style.css">
+		<title>osu!taiko SV Helper</title>
+	</head>
+	<body>
+		<div class="wrap">
+			<div class="titlebar">
+				<div class="titlebar-text">osu!taiko SV Helper</div>
+				<div class="titlebar-close"><i class='bx bx-x'></i></div>
+			</div>
+			<div class="content">
+				<div class="field">
+					<label for="beatmap">Beatmap</label>
+					<div class="file">
+						<span class="file-label"><span class="file-label-placeholder">Select your beatmap (*.osu)</span></span>
+						<button type="button" class="file-select" tabindex="-1">Select</button>
+					</div>
+				</div>
+				<div class="field-group">
+					<div class="field">
+						<label for="sp_time">Start Point</label>
+						<input type="text" id="sp_time" placeholder="Time (12345, 00:00:01...)" tabindex="1">
+						<input type="text" id="sp_velocity" placeholder="Slider Velocity (1.0...)" tabindex="3">
+						<input type="text" id="sp_volume" placeholder="Volume (0 ~ 100)" tabindex="5">
+						<div class="checkbox">
+							<input type="checkbox" id="sp_include" checked>
+							<label for="sp_include">Include Start Time</label>
+						</div>
+					</div>
+					<div class="field">
+						<label for="sp_time">End Point</label>
+						<input type="text" id="ep_time" placeholder="Time (12345, 00:00:01...)" tabindex="2">
+						<input type="text" id="ep_velocity" placeholder="Slider Velocity (1.0...)" tabindex="4">
+						<input type="text" id="ep_volume" placeholder="Volume (0 ~ 100)" tabindex="6">
+						<div class="checkbox">
+							<input type="checkbox" id="ep_include" checked>
+							<label for="ep_include">Include End Time</label>
+						</div>
+					</div>
+				</div>
+				<div class="field">
+					<label>Options</label>
+					<div class="checkbox-group">
+						<div class="checkbox">
+							<input type="checkbox" id="op_kiai">
+							<label for="op_kiai">Kiai Mode</label>
+						</div>
+						<div class="checkbox">
+							<input type="checkbox" id="op_dense">
+							<label for="op_dense">Dense Mode</label>
+						</div>
+						<div class="checkbox">
+							<input type="checkbox" id="op_offset">
+							<label for="op_offset">-10ms Offset</label>
+						</div>
+						<div class="checkbox">
+							<input type="checkbox" id="op_backup" checked>
+							<label for="op_backup">Backup</label>
+						</div>
+					</div>
+				</div>
+				<button type="button" class="btn btn-apply" tabindex="-1">Apply</button>
+				<div class="btn-group">
+					<button type="button" class="btn btn-remove" tabindex="-1">Remove</button>
+					<button type="button" class="btn btn-backup" tabindex="-1">Open Backup Folder</button>
+				</div>
+			</div>
+		</div>
+		<script src="./renderer.js"></script>
+	</body>
+</html>
