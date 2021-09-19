@@ -1,2 +1,24 @@
-# osutaiko-sv-helper
-Simple utility for adjusting slider velocity on osu!taiko mapping
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/5382000/133906171-3031508d-7e90-4902-aea7-f54bc54bcabd.png">
+</p>
+
+# osu!taiko SV Helper
+Simple utility for adjusting slider velocity for osu!taiko mapping
+
+## Requirement
+* Node.js 14.16.0 or later
+
+## Build
+#### Serve Application For Development
+```
+$ cd PROJECT_FOLDER
+$ npm install
+$ npm start
+```
+#### Build Executable File
+```
+$ cd PROJECT_FOLDER
+$ npm install
+$ npm build:win64  ---  64bit
+$ npm build:win32  ---  32bit
+```
