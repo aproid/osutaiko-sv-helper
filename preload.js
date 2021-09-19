@@ -1,7 +1,5 @@
 const { ipcRenderer } = require('electron');
 
-window.dd = console.log.bind(console);
-
 class FileInput {
 	constructor(selector) {
 		const self = this;
