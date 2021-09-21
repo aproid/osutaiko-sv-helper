@@ -1,5 +1,11 @@
 const { ipcRenderer } = require('electron');
 
+const { __DEV__, __TEST__ } = require('./src/env');
+
+if(__TEST__) {
+	window.electronRequire = require;
+}
+
 class FileInput {
 	constructor(selector) {
 		const self = this;

@@ -7,9 +7,13 @@
   "license": "MIT",
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "electron": "^13.4.0"
+    "electron": "^13.4.0",
+    "jest": "^27.2.1",
+    "spectron": "^15.0.0"
   },
   "scripts": {
+    "test": "cross-env NODE_ENV=test jest",
+    "coverage": "cross-env NODE_ENV=test jest --coverage",
     "start": "cross-env NODE_ENV=development electron .",
     "build:win32": "npx electron-builder --win portable --ia32",
     "build:win64": "npx electron-builder --win portable --x64"
