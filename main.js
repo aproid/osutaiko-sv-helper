@@ -10,12 +10,12 @@ class Main {
 	constructor() {
 		this.win = new BrowserWindow({
 			width: 400,
-			height: 438,
+			height: 520,
 			maximizable: false,
 			fullscreenable: false,
 			resizable: false,
 			frame: false,
-			icon: path.join(__dirname, '/img/icon.ico'),
+			icon: path.join(__dirname, '/icon.ico'),
 			webPreferences: {
 				contextIsolation: false,
 				enableRemoteModule: true,
@@ -26,13 +26,26 @@ class Main {
 		});
 
 		this.win.loadFile('index.html');
-
+		
 		ipcMain.on('main:file', this.onTriggerFileDialog.bind(this));
 		ipcMain.on('main:overwrite', this.onClickOverwrite.bind(this));
 		ipcMain.on('main:modify', this.onClickModify.bind(this));
 		ipcMain.on('main:remove', this.onClickRemove.bind(this));
 		ipcMain.on('main:backup', this.onClickBackup.bind(this));
+		ipcMain.on('main:basic', this.onBasicModeTrigger.bind(this));
+		ipcMain.on('main:advanced', this.onAdvancedModeTrigger.bind(this));
 		ipcMain.on('main:close', this.onClose.bind(this));
+	}
+
+	showMessageBox(type, heading, message) {
+		dialog.showMessageBox({
+			title: 'osu!taiko SV Helper',
+			type: type,
+			message: heading,
+			detail: message
+		});
+
+		return type;
 	}
 
 	onTriggerFileDialog(e) {
@@ -196,19 +209,16 @@ class Main {
 		shell.openPath(BeatmapManipulater.getBackupPath());
 	}
 
-	onClose(e) {
-		this.win.close();
+	onBasicModeTrigger(e) {
+		this.win.setBounds({ width: 400, height: 520 });
 	}
 
-	showMessageBox(type, heading, message) {
-		dialog.showMessageBox({
-			title: 'osu!taiko SV Helper',
-			type: type,
-			message: heading,
-			detail: message
-		});
+	onAdvancedModeTrigger(e) {
+		this.win.setBounds({ width: 400, height: 718 });
+	}
 
-		return type;
+	onClose(e) {
+		this.win.close();
 	}
 }
 

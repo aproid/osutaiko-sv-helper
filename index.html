@@ -9,7 +9,7 @@
 		<title>osu!taiko SV Helper</title>
 	</head>
 	<body>
-		<div class="wrap">
+		<div class="wrap mode-basic">
 			<div class="titlebar">
 				<div class="titlebar-text">osu!taiko SV Helper</div>
 				<div class="titlebar-close"><i class='bx bx-x'></i></div>
@@ -18,8 +18,22 @@
 				<div class="field">
 					<label for="beatmap">Beatmap</label>
 					<div class="file">
-						<span class="file-label"><span class="file-label-placeholder">Select your beatmap (*.osu)</span></span>
+						<div class="file-icon"><i class="bx bx-file-blank"></i></div>
+						<span class="file-label"><span class="file-label-placeholder">Drag &amp; drop beatmap file here (*.osu)</span></span>
 						<button type="button" class="file-select" tabindex="-1">Select</button>
+					</div>
+				</div>
+				<div class="field mode-item-advanced">
+					<label>Profile</label>
+					<div class="profile">
+						<input type="text" placeholder="Profile Name">
+						<select size="5">
+						</select>
+						<div class="profile-btn-group">
+							<button type="button" class="profile-btn profile-btn-save">Save</button>
+							<button type="button" class="profile-btn profile-btn-load">Load</button>
+							<button type="button" class="profile-btn profile-btn-delete">Delete</button>
+						</div>
 					</div>
 				</div>
 				<div class="field-group">
@@ -60,9 +74,11 @@
 							<label for="op_offset">-1/16 Offset</label>
 						</div>
 						<div class="checkbox">
-							<input type="checkbox" id="op_backup" checked>
-							<label for="op_backup">Backup</label>
+							<input type="checkbox" id="op_exponential">
+							<label for="op_exponential">Exponential</label>
 						</div>
+					</div>
+					<div class="checkbox-group">
 						<div class="checkbox">
 							<input type="checkbox" id="op_ignr_velocity">
 							<label for="op_ignr_velocity">Ignore Velocity</label>
@@ -70,6 +86,10 @@
 						<div class="checkbox">
 							<input type="checkbox" id="op_ignr_volume">
 							<label for="op_ignr_volume">Ignore Volume</label>
+						</div>
+						<div class="checkbox">
+							<input type="checkbox" id="op_backup" checked>
+							<label for="op_backup">Backup</label>
 						</div>
 					</div>
 				</div>
@@ -81,8 +101,9 @@
 					<button type="button" class="btn btn-remove" tabindex="-1">Remove</button>
 					<button type="button" class="btn btn-backup" tabindex="-1">Open Backup Folder</button>
 				</div>
+				<a class="mode-toggler"></a>
 			</div>
 		</div>
-		<script src="./src/renderer.js"></script>
+		<script src="./renderer.js"></script>
 	</body>
 </html>

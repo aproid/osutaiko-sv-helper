@@ -234,7 +234,7 @@ class BeatmapManipulater {
 	}
 
 	static getBackupPath(beatmapName=null) {
-		const backupPath = path.join(__DEV__ || __TEST__ ? __dirname : process.env.PORTABLE_EXECUTABLE_DIR, 'Backup');
+		const backupPath = path.join(__DEV__ || __TEST__ ? __dirname : process.env.PORTABLE_EXECUTABLE_DIR, '../Backup');
 
 		if(!fs.existsSync(backupPath))
 			fs.mkdirSync(backupPath);
