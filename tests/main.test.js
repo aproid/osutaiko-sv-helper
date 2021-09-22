@@ -83,7 +83,9 @@ describe('Main Process Unit Test', () => {
 				testParameter[i] = fieldCases[j];
 
 				for(let k in testParameter) {
-					if(requiredFields.includes(k) && (testParameter[k] === undefined || testParameter[k] === '')) {
+					if((requiredFields.includes(k) && (testParameter[k] === undefined || testParameter[k] === ''))
+					&& !(testParameter['optionIgnoreVelocity'] === true && (k === 'startPointVelocity' || k === 'endPointVelocity'))
+					&& !(testParameter['optionIgnoreVelocity'] === true && (k === 'startPointVolume' || k === 'endPointVolume'))) {
 						isFulfilled = false;
 						break;
 					}
