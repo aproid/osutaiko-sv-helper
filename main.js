@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 const { __DEV__, __TEST__ } = require('./src/env');
-const { Beatmap, BeatmapManipulater, TimingPoint } = require('./src/beatmap');
+const { BeatmapManipulater } = require('./src/beatmap');
 const { parseIntSafely, parseFloatSafely, parseTimeSafely } = require('./src/type');
 
 class Main {
@@ -27,11 +27,12 @@ class Main {
 
 		this.win.loadFile('index.html');
 
-		ipcMain.on('main:file', this.onTriggerFileDialog);
-		ipcMain.on('main:apply', this.onClickOverwrite);
-		ipcMain.on('main:remove', this.onClickRemove);
-		ipcMain.on('main:backup', this.onClickBackup);
-		ipcMain.on('main:close', this.onClose);
+		ipcMain.on('main:file', this.onTriggerFileDialog.bind(this));
+		ipcMain.on('main:overwrite', this.onClickOverwrite.bind(this));
+		ipcMain.on('main:modify', this.onClickModify.bind(this));
+		ipcMain.on('main:remove', this.onClickRemove.bind(this));
+		ipcMain.on('main:backup', this.onClickBackup.bind(this));
+		ipcMain.on('main:close', this.onClose.bind(this));
 	}
 
 	onTriggerFileDialog(e) {
@@ -54,7 +55,7 @@ class Main {
 		e.returnValue = null;
 	}
 
-	onClickOverwrite() {
+	onClickOverwrite(e, datas) {
 		let beatmapManipulater;
 
 		let {
@@ -70,8 +71,10 @@ class Main {
 			optionKiai,
 			optionDense,
 			optionOffset,
-			optionBackup
-		} = data;
+			optionBackup,
+			optionIgnoreVelocity,
+			optionIgnoreVolume
+		} = datas;
 
 		if(beatmapPath === undefined || beatmapPath === ''
 		|| startPointTime === undefined || startPointTime === ''
@@ -96,7 +99,7 @@ class Main {
 		}
 
 		try {
-			beatmapManipulater = new beatmapManipulater(beatmapPath);
+			beatmapManipulater = new BeatmapManipulater(beatmapPath);
 		} catch(err) {
 			return this.showMessageBox('error', 'Failed to read beatmap file', 'Couldn\'t read your beatmap file');
 		}
@@ -120,7 +123,9 @@ class Main {
 				isKiai: optionKiai,
 				isDense: optionDense,
 				isOffset: optionOffset,
-				isBackup: optionBackup
+				isBackup: optionBackup,
+				isIgnoreVelocity: optionIgnoreVelocity,
+				isIgnoreVolume: optionIgnoreVolume
 			});
 		} catch(err) {
 			return this.showMessageBox('error', 'Failed to write beatmap file', 'Couldn\'t write your beatmap file');
@@ -129,7 +134,86 @@ class Main {
 		this.showMessageBox('info', 'Successfully Applied', 'Don\'t forget to press CTRL + L in map editor to reload');
 	}
 
-	onClickRemove() {
+	onClickModify(e, datas) {
+		let beatmapManipulater;
+
+		let {
+			beatmapPath,
+			startPointTime,
+			startPointVelocity,
+			startPointVolume,
+			startTimeInclude,
+			endPointTime,
+			endPointVelocity,
+			endPointVolume,
+			endTimeInclude,
+			optionKiai,
+			optionDense,
+			optionOffset,
+			optionBackup,
+			optionIgnoreVelocity,
+			optionIgnoreVolume
+		} = datas;
+
+		if(beatmapPath === undefined || beatmapPath === ''
+		|| startPointTime === undefined || startPointTime === ''
+		|| startPointVelocity === undefined || startPointVelocity === ''
+		|| startPointVolume === undefined || startPointVolume === ''
+		|| endPointTime === undefined || endPointTime === ''
+		|| endPointVelocity === undefined || endPointVelocity === ''
+		|| endPointVolume === undefined || endPointVolume === '') {
+			return this.showMessageBox('error', 'Empty input field found', 'You should enter the value to all input fields');
+		}
+
+		try {
+			startPointTime = parseTimeSafely(startPointTime);
+			startPointVelocity = parseFloatSafely(startPointVelocity);
+			startPointVolume = parseIntSafely(startPointVolume);
+
+			endPointTime = parseTimeSafely(endPointTime);
+			endPointVelocity = parseFloatSafely(endPointVelocity);
+			endPointVolume = parseIntSafely(endPointVolume);
+		} catch(err) {
+			return this.showMessageBox('error', 'Invalid value for input fields', 'You should enter the valid value to all input fields');
+		}
+
+		try {
+			beatmapManipulater = new BeatmapManipulater(beatmapPath);
+		} catch(err) {
+			return this.showMessageBox('error', 'Failed to read beatmap file', 'Couldn\'t read your beatmap file');
+		}
+
+		if(optionBackup) {
+			try {
+				beatmapManipulater.backup();
+			} catch(err) {
+				return this.showMessageBox('error', 'Failed to write backup file', 'Couldn\'t write your backup file');
+			}
+		}
+
+		try {
+			beatmapManipulater.modify(startPointTime, endPointTime, {
+				startVelocity: startPointVelocity,
+				startVolume: startPointVolume,
+				endVelocity: endPointVelocity,
+				endVolume: endPointVolume,
+				includingStartTime: startTimeInclude,
+				includingEndTime: endTimeInclude,
+				isKiai: optionKiai,
+				isDense: optionDense,
+				isOffset: optionOffset,
+				isBackup: optionBackup,
+				isIgnoreVelocity: optionIgnoreVelocity,
+				isIgnoreVolume: optionIgnoreVolume
+			});
+		} catch(err) {
+			return this.showMessageBox('error', 'Failed to write beatmap file', 'Couldn\'t write your beatmap file');
+		}
+
+		this.showMessageBox('info', 'Successfully Applied', 'Don\'t forget to press CTRL + L in map editor to reload');
+	}
+
+	onClickRemove(e, datas) {
 		let beatmapManipulater;
 
 		let {
@@ -140,7 +224,7 @@ class Main {
 			endTimeInclude,
 			optionOffset,
 			optionBackup
-		} = data;
+		} = datas;
 
 		if(beatmapPath === undefined || beatmapPath === ''
 		|| startPointTime === undefined || startPointTime === ''
@@ -156,7 +240,7 @@ class Main {
 		}
 
 		try {
-			beatmapManipulater = new beatmapManipulater(beatmapPath);
+			beatmapManipulater = new BeatmapManipulater(beatmapPath);
 		} catch(err) {
 			return this.showMessageBox('error', 'Failed to read beatmap file', 'Couldn\'t read your beatmap file');
 		}
@@ -183,42 +267,49 @@ class Main {
 		this.showMessageBox('info', 'Successfully Applied', 'Don\'t forget to press CTRL + L in map editor to reload');
 	}
 
-	onClickBackup() {
+	onClickBackup(e) {
 		shell.openPath(BeatmapManipulater.getBackupPath());
 	}
 
-	onClose() {
+	onClose(e) {
 		this.win.close();
 	}
 
 	showMessageBox(type, heading, message) {
-		if(!__TEST__) {
-			dialog.showMessageBox({
-				title: 'osu!taiko SV Helper',
-				type: type,
-				message: heading,
-				detail: message
-			});
-		}
+		dialog.showMessageBox({
+			title: 'osu!taiko SV Helper',
+			type: type,
+			message: heading,
+			detail: message
+		});
+
+		return type;
 	}
 }
 
-function createInstance() {
-	const main = new Main();
+if(!__TEST__) {
+	function createInstance() {
+		const main = new Main();
 
-	return main;
-}
+		return main;
+	}
 
-app.whenReady().then(() => {
-	createInstance();
-	
-	app.on('activate', () => {
-		if(BrowserWindow.getAllWindows().length === 0)
-			createInstance();
+	app.whenReady().then(() => {
+		createInstance();
+		
+		app.on('activate', () => {
+			if(BrowserWindow.getAllWindows().length === 0)
+				createInstance();
+		});
 	});
-});
 
-app.on('window-all-closed', () => {
-	if(process.platform !== 'darwin')
-		app.quit()
-});
+	app.on('window-all-closed', () => {
+		if(process.platform !== 'darwin')
+			app.quit()
+	});
+};
+
+module.exports = {
+	default: Main,
+	Main
+};

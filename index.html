@@ -57,15 +57,26 @@
 						</div>
 						<div class="checkbox">
 							<input type="checkbox" id="op_offset">
-							<label for="op_offset">-10ms Offset</label>
+							<label for="op_offset">-1/16 Offset</label>
 						</div>
 						<div class="checkbox">
 							<input type="checkbox" id="op_backup" checked>
 							<label for="op_backup">Backup</label>
 						</div>
+						<div class="checkbox">
+							<input type="checkbox" id="op_ignr_velocity">
+							<label for="op_ignr_velocity">Ignore Velocity</label>
+						</div>
+						<div class="checkbox">
+							<input type="checkbox" id="op_ignr_volume">
+							<label for="op_ignr_volume">Ignore Volume</label>
+						</div>
 					</div>
 				</div>
-				<button type="button" class="btn btn-apply" tabindex="-1">Apply</button>
+				<div class="btn-group">
+					<button type="button" class="btn btn-overwrite" tabindex="-1">Overwrite</button>
+					<button type="button" class="btn btn-modify" tabindex="-1">Modify</button>
+				</div>
 				<div class="btn-group">
 					<button type="button" class="btn btn-remove" tabindex="-1">Remove</button>
 					<button type="button" class="btn btn-backup" tabindex="-1">Open Backup Folder</button>

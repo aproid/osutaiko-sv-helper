@@ -1,11 +1,5 @@
 const { ipcRenderer } = require('electron');
 
-const { __DEV__, __TEST__ } = require('./src/env');
-
-if(__TEST__) {
-	window.electronRequire = require;
-}
-
 class FileInput {
 	constructor(selector) {
 		const self = this;
@@ -53,16 +47,82 @@ window.addEventListener('DOMContentLoaded', () => {
 	const $optionDense = document.getElementById('op_dense');
 	const $optionOffset = document.getElementById('op_offset');
 	const $optionBackup = document.getElementById('op_backup');
+	const $optionIgnoreVelocity = document.getElementById('op_ignr_velocity');
+	const $optionIgnoreVolume = document.getElementById('op_ignr_volume');
 
-	const $applyButton = document.querySelector('.btn-apply');
+	const $overwriteButton = document.querySelector('.btn-overwrite');
+	const $modifyButton = document.querySelector('.btn-modify');
 	const $removeButton = document.querySelector('.btn-remove');
 	const $backupButton = document.querySelector('.btn-backup');
 
-	$applyButton.addEventListener('click', onApplyClick);
+	$overwriteButton.addEventListener('click', onOverwriteClick);
+	$modifyButton.addEventListener('click', onModifyClick);
 	$removeButton.addEventListener('click', onRemoveClick);
 	$backupButton.addEventListener('click', onBackupClick);
 
-	function onApplyClick() {
+	function onOverwriteClick() {
+		const d = getInputDatas();
+
+		ipcRenderer.send('main:overwrite', {
+			beatmapPath: d.beatmapPath,
+			startPointTime: d.startPointTime,
+			startPointVelocity: d.startPointVelocity,
+			startPointVolume: d.startPointVolume,
+			startTimeInclude: d.startTimeInclude,
+			endPointTime: d.endPointTime,
+			endPointVelocity: d.endPointVelocity,
+			endPointVolume: d.endPointVolume,
+			endTimeInclude: d.endTimeInclude,
+			optionKiai: d.optionKiai,
+			optionDense: d.optionDense,
+			optionOffset: d.optionOffset,
+			optionBackup: d.optionBackup,
+			optionIgnoreVelocity: d.optionIgnoreVelocity,
+			optionIgnoreVolume: d.optionIgnoreVolume
+		});
+	}
+
+	function onModifyClick() {
+		const d = getInputDatas();
+
+		ipcRenderer.send('main:modify', {
+			beatmapPath: d.beatmapPath,
+			startPointTime: d.startPointTime,
+			startPointVelocity: d.startPointVelocity,
+			startPointVolume: d.startPointVolume,
+			startTimeInclude: d.startTimeInclude,
+			endPointTime: d.endPointTime,
+			endPointVelocity: d.endPointVelocity,
+			endPointVolume: d.endPointVolume,
+			endTimeInclude: d.endTimeInclude,
+			optionKiai: d.optionKiai,
+			optionDense: d.optionDense,
+			optionOffset: d.optionOffset,
+			optionBackup: d.optionBackup,
+			optionIgnoreVelocity: d.optionIgnoreVelocity,
+			optionIgnoreVolume: d.optionIgnoreVolume
+		});
+	}
+
+	function onRemoveClick() {
+		const d = getInputDatas();
+
+		ipcRenderer.send('main:remove', {
+			beatmapPath: d.beatmapPath,
+			startPointTime: d.startPointTime,
+			startTimeInclude: d.startTimeInclude,
+			endPointTime: d.endPointTime,
+			endTimeInclude: d.endTimeInclude,
+			optionOffset: d.optionOffset,
+			optionBackup: d.optionBackup
+		});
+	}
+
+	function onBackupClick() {
+		ipcRenderer.send('main:backup');
+	}
+
+	function getInputDatas() {
 		const beatmapPath = beatmapInput.value();
 
 		const startPointTime = $startPointTime.value;
@@ -79,8 +139,10 @@ window.addEventListener('DOMContentLoaded', () => {
 		const optionDense = $optionDense.checked;
 		const optionOffset = $optionOffset.checked;
 		const optionBackup = $optionBackup.checked;
+		const optionIgnoreVelocity = $optionIgnoreVelocity.checked;
+		const optionIgnoreVolume = $optionIgnoreVolume.checked;
 
-		ipcRenderer.send('main:apply', {
+		return {
 			beatmapPath,
 			startPointTime,
 			startPointVelocity,
@@ -93,35 +155,10 @@ window.addEventListener('DOMContentLoaded', () => {
 			optionKiai,
 			optionDense,
 			optionOffset,
-			optionBackup
-		});
-	}
-
-	function onRemoveClick() {
-		const beatmapPath = beatmapInput.value();
-
-		const startPointTime = $startPointTime.value;
-		const startTimeInclude = $startTimeInclude.checked;
-
-		const endPointTime = $endPointTime.value;
-		const endTimeInclude = $endTimeInclude.checked;
-
-		const optionOffset = $optionOffset.checked;
-		const optionBackup = $optionBackup.checked;
-
-		ipcRenderer.send('main:remove', {
-			beatmapPath,
-			startPointTime,
-			startTimeInclude,
-			endPointTime,
-			endTimeInclude,
-			optionOffset,
-			optionBackup
-		});
-	}
-
-	function onBackupClick() {
-		ipcRenderer.send('main:backup');
+			optionBackup,
+			optionIgnoreVelocity,
+			optionIgnoreVolume
+		};
 	}
 });
 
