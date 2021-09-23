@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/5382000/133906171-3031508d-7e90-4902-aea7-f54bc54bcabd.png">
+  <img src="https://user-images.githubusercontent.com/5382000/134500486-242f5721-be74-48c7-aa98-cc3d6009115b.png">
 </p>
 
 # osu!taiko SV Helper
