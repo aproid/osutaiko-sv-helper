@@ -1,3 +1,4 @@
+const Decimal = require('decimal.js');
 const moment = require('moment');
 const path = require('path');
 const fs = require('fs');
@@ -51,8 +52,13 @@ class Beatmap {
 		let { objects, startIndex, endIndex } = this.parseCommaSeperatedTag(this.constructor.TIMING_POINTS_TAG);
 
 		objects = objects.reduce((accumulator, timingPoint) => {
+			try {
 			if(timingPoint.length >= 8)
 				accumulator.push(TimingPoint.fromArray(timingPoint));
+			} catch(e) {
+				console.log(timingPoint);
+				throw e;
+			}
 
 			return accumulator;
 		}, []);
@@ -168,8 +174,13 @@ class BeatmapManipulater {
 
 	modify(startTime, endTime, options={}) {
 		const self = this.constructor;
+		
+		if(options.isOffset) {
+			startTime = this.getSnapBasedOffsetTime(startTime, -16);
+			endTime = this.getSnapBasedOffsetTime(endTime, -16);
+		}
 
-		const timingPoints = this.beatmap.getTimingPointsInRange(startTime, endTime, option.includingStartTime, option.includingEndTime);
+		const timingPoints = this.beatmap.getTimingPointsInRange(startTime, endTime, options.includingStartTime, options.includingEndTime);
 
 		for(let i in timingPoints) {
 			const timingPoint = timingPoints[i];
@@ -208,7 +219,7 @@ class BeatmapManipulater {
 	getPreviousTimingPoint(time, uninherited=-1) {
 		const timingPoints = this.beatmap.getTimingPointsInRange(-Infinity, time);
 
-		for(let i = timingPoints.length - 1; i > 0; i--) {
+		for(let i = timingPoints.length - 1; i >= 0; i--) {
 			const timingPoint = timingPoints[i];
 
 			if(uninherited === -1 || timingPoint.uninherited === uninherited)
@@ -242,17 +253,24 @@ class BeatmapManipulater {
 		if(timingPoint === null)
 			return NaN;
 
-		return Math[snap < 0 ? 'floor' : 'ceil'](time + timingPoint.beatLength / snap);
+		let i = Decimal(timingPoint.time);
+		let j = Decimal(timingPoint.beatLength).div(16);
+
+		while(i.lessThan(time)) {
+			i = i.add(j);
+		}
+
+		return i.add(Decimal(timingPoint.beatLength).div(snap)).floor().toNumber();
 	}
 
 	static getTimeInterpolatedValue(cTime, sTime, eTime, sValue, eValue, isExponential=false) {
 		const progress = (cTime - sTime) / (eTime - sTime);
 
-		return ((progress * (eValue - sValue)) + sValue) * (isExponential ? Math.pow(2, 10 * progress - 10) : 1);
+		return (((isExponential ? Math.pow(2, 10 * progress - 10) : progress) * (eValue - sValue)) + sValue);
 	}
 
 	static getBackupPath(beatmapName=null) {
-		const backupPath = path.join(__DEV__ || __TEST__ ? __dirname : process.env.PORTABLE_EXECUTABLE_DIR, '../Backup');
+		const backupPath = path.join(__DEV__ || __TEST__ ? path.join(__dirname, '..') : process.env.PORTABLE_EXECUTABLE_DIR, 'Backup');
 
 		if(!fs.existsSync(backupPath))
 			fs.mkdirSync(backupPath);
