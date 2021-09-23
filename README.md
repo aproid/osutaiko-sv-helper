@@ -21,6 +21,6 @@ $ npm start
 $ cd PROJECT_FOLDER
 $ npm install
 $ npm test
-$ npm build:win64  ---  64bit
-$ npm build:win32  ---  32bit
+$ npm run build:win64  ---  64bit
+$ npm run build:win32  ---  32bit
 ```
