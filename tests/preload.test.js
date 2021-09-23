@@ -31,9 +31,10 @@ describe('DOM Unit Test', () => {
 	let $optionKiai;
 	let $optionDense;
 	let $optionOffset;
-	let $optionBackup;
+	let $optionExponential;
 	let $optionIgnoreVelocity;
 	let $optionIgnoreVolume;
+	let $optionBackup;
 	let $overwriteButton;
 	let $removeButton;
 	let $backupButton;
@@ -52,9 +53,10 @@ describe('DOM Unit Test', () => {
 			optionKiai: [ false, [ () => $optionKiai.checked = true, true ] ],
 			optionDense: [ false, [ () => $optionDense.checked = true, true ] ],
 			optionOffset: [ false, [ () => $optionOffset.checked = true, true ] ],
-			optionBackup: [ true, [ () => $optionBackup.checked = false, false ] ],
+			optionExponential: [ false, [ () => $optionExponential.checked = true, true ] ],
 			optionIgnoreVelocity: [ false, [ () => $optionIgnoreVelocity.checked = true, true ] ],
 			optionIgnoreVolume: [ false, [ () => $optionIgnoreVolume.checked = true, true ] ],
+			optionBackup: [ true, [ () => $optionBackup.checked = false, false ] ]
 		};
 
 		const testParameter = Object.keys(cases).reduce((acc, k) => {
@@ -105,9 +107,10 @@ describe('DOM Unit Test', () => {
 		$optionKiai = document.getElementById('op_kiai');
 		$optionDense = document.getElementById('op_dense');
 		$optionOffset = document.getElementById('op_offset');
-		$optionBackup = document.getElementById('op_backup');
+		$optionExponential = document.getElementById('op_exponential');
 		$optionIgnoreVelocity = document.getElementById('op_ignr_velocity');
 		$optionIgnoreVolume = document.getElementById('op_ignr_volume');
+		$optionBackup = document.getElementById('op_backup');
 		$overwriteButton = document.querySelector('.btn-overwrite');
 		$removeButton = document.querySelector('.btn-remove');
 		$backupButton = document.querySelector('.btn-backup');
@@ -136,9 +139,10 @@ describe('DOM Unit Test', () => {
 				optionKiai: p.optionKiai,
 				optionDense: p.optionDense,
 				optionOffset: p.optionOffset,
-				optionBackup: p.optionBackup,
+				optionExponential: p.optionExponential,
 				optionIgnoreVelocity: p.optionIgnoreVelocity,
-				optionIgnoreVolume: p.optionIgnoreVolume
+				optionIgnoreVolume: p.optionIgnoreVolume,
+				optionBackup: p.optionBackup
 			});
 		});
 	});

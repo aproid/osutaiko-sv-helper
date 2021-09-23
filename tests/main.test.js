@@ -60,9 +60,10 @@ describe('Main Process Unit Test', () => {
 			optionKiai: [ false, true ],
 			optionDense: [ false, true ],
 			optionOffset: [ false, true ],
-			optionBackup: [ true, false ],
 			optionIgnoreVelocity: [ false, true ],
-			optionIgnoreVolume: [ false, true ]
+			optionIgnoreVolume: [ false, true ],
+			optionExponential: [ false, true ],
+			optionBackup: [ true, false ]
 		};
 
 		const requiredFields = minimal ? ['beatmapPath', 'startPointTime', 'endPointTime']
@@ -159,9 +160,10 @@ describe('Main Process Unit Test', () => {
 					isKiai: datas.optionKiai,
 					isDense: datas.optionDense,
 					isOffset: datas.optionOffset,
-					isBackup: datas.optionBackup,
 					isIgnoreVelocity: datas.optionIgnoreVelocity,
-					isIgnoreVolume: datas.optionIgnoreVolume
+					isIgnoreVolume: datas.optionIgnoreVolume,
+					isExponential: datas.optionExponential,
+					isBackup: datas.optionBackup
 				});
 			}
 		})

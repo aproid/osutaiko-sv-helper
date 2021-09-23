@@ -223,9 +223,10 @@ window.addEventListener('DOMContentLoaded', () => {
 	const $optionKiai = document.getElementById('op_kiai');
 	const $optionDense = document.getElementById('op_dense');
 	const $optionOffset = document.getElementById('op_offset');
-	const $optionBackup = document.getElementById('op_backup');
+	const $optionExponential = document.getElementById('op_exponential');
 	const $optionIgnoreVelocity = document.getElementById('op_ignr_velocity');
 	const $optionIgnoreVolume = document.getElementById('op_ignr_volume');
+	const $optionBackup = document.getElementById('op_backup');
 
 	const $overwriteButton = document.querySelector('.btn-overwrite');
 	const $modifyButton = document.querySelector('.btn-modify');
@@ -294,9 +295,10 @@ window.addEventListener('DOMContentLoaded', () => {
 			optionKiai: d.optionKiai,
 			optionDense: d.optionDense,
 			optionOffset: d.optionOffset,
-			optionBackup: d.optionBackup,
+			optionExponential: d.optionExponential,
 			optionIgnoreVelocity: d.optionIgnoreVelocity,
-			optionIgnoreVolume: d.optionIgnoreVolume
+			optionIgnoreVolume: d.optionIgnoreVolume,
+			optionBackup: d.optionBackup
 		});
 	}
 
@@ -314,11 +316,11 @@ window.addEventListener('DOMContentLoaded', () => {
 			endPointVolume: d.endPointVolume,
 			endTimeInclude: d.endTimeInclude,
 			optionKiai: d.optionKiai,
-			optionDense: d.optionDense,
 			optionOffset: d.optionOffset,
-			optionBackup: d.optionBackup,
+			optionExponential: d.optionExponential,
 			optionIgnoreVelocity: d.optionIgnoreVelocity,
-			optionIgnoreVolume: d.optionIgnoreVolume
+			optionIgnoreVolume: d.optionIgnoreVolume,
+			optionBackup: d.optionBackup
 		});
 	}
 
@@ -356,9 +358,10 @@ window.addEventListener('DOMContentLoaded', () => {
 		const optionKiai = $optionKiai.checked;
 		const optionDense = $optionDense.checked;
 		const optionOffset = $optionOffset.checked;
-		const optionBackup = $optionBackup.checked;
+		const optionExponential = $optionExponential.checked;
 		const optionIgnoreVelocity = $optionIgnoreVelocity.checked;
 		const optionIgnoreVolume = $optionIgnoreVolume.checked;
+		const optionBackup = $optionBackup.checked;
 
 		return {
 			beatmapPath,
@@ -373,9 +376,10 @@ window.addEventListener('DOMContentLoaded', () => {
 			optionKiai,
 			optionDense,
 			optionOffset,
-			optionBackup,
+			optionExponential,
 			optionIgnoreVelocity,
-			optionIgnoreVolume
+			optionIgnoreVolume,
+			optionBackup
 		};
 	}
 
@@ -393,9 +397,10 @@ window.addEventListener('DOMContentLoaded', () => {
 		$optionKiai.checked = datas.optionKiai;
 		$optionDense.checked = datas.optionDense;
 		$optionOffset.checked = datas.optionOffset;
-		$optionBackup.checked = datas.optionBackup;
+		$optionExponential.checked = datas.optionExponential;
 		$optionIgnoreVelocity.checked = datas.optionIgnoreVelocity;
 		$optionIgnoreVolume.checked = datas.optionIgnoreVolume;
+		$optionBackup.checked = datas.optionBackup;
 
 		$optionIgnoreVelocity.dispatchEvent(new Event('change'));
 		$optionIgnoreVolume.dispatchEvent(new Event('change'));

@@ -141,8 +141,8 @@ class BeatmapManipulater {
 				if(i === endTime && options.includingEndTime === false) continue;
 
 				const timingPoint = new TimingPoint;
-				timingPoint.beatLength = options.ignoreVelocity ? this.getInheritableBeatLength(i) : (-100 / self.getTimeInterpolatedValue(i, startTime, endTime, options.startVelocity, options.endVelocity));
-				timingPoint.volume = options.ignoreVolume ? this.getInheritableVolume(i) : (Math.round(self.getTimeInterpolatedValue(i, startTime, endTime, options.startVolume, options.endVolume)));
+				timingPoint.beatLength = options.isIgnoreVelocity ? this.getInheritableBeatLength(i) : (-100 / self.getTimeInterpolatedValue(i, startTime, endTime, options.startVelocity, options.endVelocity, options.isExponential));
+				timingPoint.volume = options.isIgnoreVolume ? this.getInheritableVolume(i) : (Math.round(self.getTimeInterpolatedValue(i, startTime, endTime, options.startVolume, options.endVolume, options.isExponential)));
 				timingPoint.time = options.isOffset ? this.getSnapBasedOffsetTime(i, -16) : i;
 				timingPoint.effects = options.isKiai ? 1 : 0;
 				timingPoints.push(timingPoint);
@@ -154,8 +154,8 @@ class BeatmapManipulater {
 				const hitObject = hitObjects[i];
 
 				const timingPoint = new TimingPoint;
-				timingPoint.beatLength = options.ignoreVelocity ? this.getInheritableBeatLength(hitObject.time) : (-100 / self.getTimeInterpolatedValue(hitObject.time, startTime, endTime, options.startVelocity, options.endVelocity));
-				timingPoint.volume = options.ignoreVolume ? this.getInheritableVolume(hitObject.time) : (Math.round(self.getTimeInterpolatedValue(hitObject.time, startTime, endTime, options.startVolume, options.endVolume)));
+				timingPoint.beatLength = options.isIgnoreVelocity ? this.getInheritableBeatLength(hitObject.time) : (-100 / self.getTimeInterpolatedValue(hitObject.time, startTime, endTime, options.startVelocity, options.endVelocity, options.isExponential));
+				timingPoint.volume = options.isIgnoreVolume ? this.getInheritableVolume(hitObject.time) : (Math.round(self.getTimeInterpolatedValue(hitObject.time, startTime, endTime, options.startVolume, options.endVolume, options.isExponential)));
 				timingPoint.time = options.isOffset ? this.getSnapBasedOffsetTime(hitObject.time, -16) : hitObject.time;
 				timingPoint.effects = options.isKiai ? 1 : 0;
 				timingPoints.push(timingPoint);
@@ -166,10 +166,26 @@ class BeatmapManipulater {
 		this.beatmap.write();
 	}
 
+	modify(startTime, endTime, options={}) {
+		const self = this.constructor;
+
+		const timingPoints = this.beatmap.getTimingPointsInRange(startTime, endTime, option.includingStartTime, option.includingEndTime);
+
+		for(let i in timingPoints) {
+			const timingPoint = timingPoints[i];
+			timingPoint.beatLength = options.isIgnoreVelocity ? timingPoint.beatLength : (-100 / self.getTimeInterpolatedValue(timingPoint.time, startTime, endTime, options.startVelocity, options.endVelocity, options.isExponential));
+			timingPoint.volume = options.isIgnoreVolume ? timingPoint.volume : (Math.round(self.getTimeInterpolatedValue(timingPoint.time, startTime, endTime, options.startVolume, options.endVolume, options.isExponential)));
+			timingPoint.effects = options.isKiai ? 1 : 0;
+		}
+
+		this.beatmap.replaceTimingPoints(this.beatmap.timingPoints);
+		this.beatmap.write();
+	}
+
 	remove(startTime, endTime, options={}) {
 		if(options.isOffset) {
-			startTime -= 10;
-			endTime -= 10;
+			startTime = this.getSnapBasedOffsetTime(startTime, -16);
+			endTime = this.getSnapBasedOffsetTime(endTime, -16);
 		}
 
 		const timingPoints = this.beatmap.getTimingPointsOutRange(startTime, endTime, options.includingStartTime, options.includingEndTime);
@@ -229,8 +245,10 @@ class BeatmapManipulater {
 		return Math[snap < 0 ? 'floor' : 'ceil'](time + timingPoint.beatLength / snap);
 	}
 
-	static getTimeInterpolatedValue(cTime, sTime, eTime, sValue, eValue) {
-		return (((cTime - sTime) / (eTime - sTime) * (eValue - sValue)) + sValue);
+	static getTimeInterpolatedValue(cTime, sTime, eTime, sValue, eValue, isExponential=false) {
+		const progress = (cTime - sTime) / (eTime - sTime);
+
+		return ((progress * (eValue - sValue)) + sValue) * (isExponential ? Math.pow(2, 10 * progress - 10) : 1);
 	}
 
 	static getBackupPath(beatmapName=null) {

@@ -62,6 +62,7 @@ describe('Beatmap Module Unit Test', () => {
 		expect(hitObject.isBigNote()).toBe(false);
 		expect(hitObject.isDon()).toBe(false);
 		expect(hitObject.isKat()).toBe(true);
+		expect(hitObject.isSpinner()).toBe(false);
 		expect(hitObject.isSlider()).toBe(false);
 		expect(hitObject.toString()).toBe('256,192,119190,1,8,0:0:0:0:');
 	});
@@ -262,8 +263,8 @@ describe('Beatmap Module Unit Test', () => {
 						beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
 							includingStartTime: includingStartTime,
 							includingEndTime: includingEndTime,
-							ignoreVelocity: true,
-							ignoreVolume: true
+							isIgnoreVelocity: true,
+							isIgnoreVolume: true
 						});
 
 						const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
@@ -288,7 +289,7 @@ describe('Beatmap Module Unit Test', () => {
 					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
 						startVelocity: 1.0,
 						endVelocity: 2.0,
-						ignoreVolume: true
+						isIgnoreVolume: true
 					});
 
 					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
@@ -305,7 +306,7 @@ describe('Beatmap Module Unit Test', () => {
 					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
 						startVolume: 90,
 						endVolume: 40,
-						ignoreVelocity: true
+						isIgnoreVelocity: true
 					});
 
 					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
@@ -404,11 +405,11 @@ describe('Beatmap Module Unit Test', () => {
 
 				test('Kiai & Offset & Dense', () => {
 					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-						ignoreVelocity: true,
-						ignoreVolume: true,
 						isKiai: true,
 						isOffset: true,
-						isDense: true
+						isDense: true,
+						isIgnoreVelocity: true,
+						isIgnoreVolume: true
 					});
 
 					const startOffset = beatmapManipulater.getSnapBasedOffsetTime(ISOLATE_RANGE_START, -16);
@@ -493,9 +494,16 @@ describe('Beatmap Module Unit Test', () => {
 						isOffset: true
 					});
 
+					const startOffset = beatmapManipulater.getSnapBasedOffsetTime(TIMING_POINT_RANGE_START, -16);
+					const endOffset = beatmapManipulater.getSnapBasedOffsetTime(TIMING_POINT_RANGE_END, -16);
+
 					const timingPointsLength = beatmapManipulater.beatmap.timingPoints.length;
+					const timingPointsInRange = beatmapManipulater.beatmap.getTimingPointsInRange(TIMING_POINT_RANGE_START, TIMING_POINT_RANGE_END);
+					const timingPointsInOffsetRange = beatmapManipulater.beatmap.getTimingPointsInRange(startOffset, endOffset);
 
 					expect(timingPointsLength).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH + 1);
+					expect(timingPointsInRange.length).toBe(1);
+					expect(timingPointsInOffsetRange.length).toBe(0);
 				});
 			});
 		});

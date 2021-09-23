@@ -84,9 +84,10 @@ class Main {
 			optionKiai,
 			optionDense,
 			optionOffset,
-			optionBackup,
+			optionExponential,
 			optionIgnoreVelocity,
-			optionIgnoreVolume
+			optionIgnoreVolume,
+			optionBackup
 		} = datas;
 
 		if(beatmapPath === undefined || beatmapPath === ''
@@ -136,9 +137,10 @@ class Main {
 				isKiai: optionKiai,
 				isDense: optionDense,
 				isOffset: optionOffset,
-				isBackup: optionBackup,
+				isExponential: optionExponential,
 				isIgnoreVelocity: optionIgnoreVelocity,
-				isIgnoreVolume: optionIgnoreVolume
+				isIgnoreVolume: optionIgnoreVolume,
+				isBackup: optionBackup
 			});
 		} catch(err) {
 			return this.showMessageBox('error', 'Failed to write beatmap file', 'Couldn\'t write your beatmap file');
@@ -148,7 +150,82 @@ class Main {
 	}
 
 	onClickModify(e, datas) {
+		let beatmapManipulater;
 
+		let {
+			beatmapPath,
+			startPointTime,
+			startPointVelocity,
+			startPointVolume,
+			startTimeInclude,
+			endPointTime,
+			endPointVelocity,
+			endPointVolume,
+			endTimeInclude,
+			optionKiai,
+			optionOffset,
+			optionExponential,
+			optionIgnoreVelocity,
+			optionIgnoreVolume,
+			optionBackup
+		} = datas;
+
+		if(beatmapPath === undefined || beatmapPath === ''
+		|| startPointTime === undefined || startPointTime === ''
+		|| endPointTime === undefined || endPointTime === ''
+		|| (optionIgnoreVelocity === false && (startPointVelocity === undefined || startPointVelocity === ''))
+		|| (optionIgnoreVelocity === false && (endPointVelocity === undefined || endPointVelocity === ''))
+		|| (optionIgnoreVolume === false && (startPointVolume === undefined || startPointVolume === ''))
+		|| (optionIgnoreVolume === false && (endPointVolume === undefined || endPointVolume === ''))) {
+			return this.showMessageBox('error', 'Empty input field found', 'You should enter the value to all input fields');
+		}
+
+		try {
+			startPointTime = parseTimeSafely(startPointTime);
+			startPointVelocity = optionIgnoreVelocity ? parseFloat(startPointVelocity) : parseFloatSafely(startPointVelocity);
+			startPointVolume = optionIgnoreVolume ? parseInt(startPointVolume) : parseIntSafely(startPointVolume);
+
+			endPointTime = parseTimeSafely(endPointTime);
+			endPointVelocity = optionIgnoreVelocity ? parseFloat(endPointVelocity) : parseFloatSafely(endPointVelocity);
+			endPointVolume = optionIgnoreVolume ? parseInt(endPointVolume) : parseIntSafely(endPointVolume);
+		} catch(err) {
+			return this.showMessageBox('error', 'Invalid value for input fields', 'You should enter the valid value to all input fields');
+		}
+
+		try {
+			beatmapManipulater = new BeatmapManipulater(beatmapPath);
+		} catch(err) {
+			return this.showMessageBox('error', 'Failed to read beatmap file', 'Couldn\'t read your beatmap file');
+		}
+
+		if(optionBackup) {
+			try {
+				beatmapManipulater.backup();
+			} catch(err) {
+				return this.showMessageBox('error', 'Failed to write backup file', 'Couldn\'t write your backup file');
+			}
+		}
+
+		try {
+			beatmapManipulater.modify(startPointTime, endPointTime, {
+				startVelocity: startPointVelocity,
+				startVolume: startPointVolume,
+				endVelocity: endPointVelocity,
+				endVolume: endPointVolume,
+				includingStartTime: startTimeInclude,
+				includingEndTime: endTimeInclude,
+				isKiai: optionKiai,
+				isOffset: optionOffset,
+				isExponential: optionExponential,
+				isIgnoreVelocity: optionIgnoreVelocity,
+				isIgnoreVolume: optionIgnoreVolume,
+				isBackup: optionBackup
+			});
+		} catch(err) {
+			return this.showMessageBox('error', 'Failed to write beatmap file', 'Couldn\'t write your beatmap file');
+		}
+
+		this.showMessageBox('info', 'Successfully Applied', 'Don\'t forget to press CTRL + L in map editor to reload');
 	}
 
 	onClickRemove(e, datas) {
