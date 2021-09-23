@@ -19,6 +19,7 @@
     "build:win64": "npx electron-builder --win portable --x64"
   },
   "dependencies": {
+    "decimal.js": "^10.3.1",
     "moment": "^2.29.1"
   },
   "build": {

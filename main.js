@@ -143,6 +143,7 @@ class Main {
 				isBackup: optionBackup
 			});
 		} catch(err) {
+			console.log(err);
 			return this.showMessageBox('error', 'Failed to write beatmap file', 'Couldn\'t write your beatmap file');
 		}
 
@@ -222,6 +223,7 @@ class Main {
 				isBackup: optionBackup
 			});
 		} catch(err) {
+			console.log(err);
 			return this.showMessageBox('error', 'Failed to write beatmap file', 'Couldn\'t write your beatmap file');
 		}
 

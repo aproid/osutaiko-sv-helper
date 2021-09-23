@@ -4,18 +4,18 @@ const fs = require('fs');
 const { Beatmap, BeatmapManipulater, TimingPoint, HitObject } = require('../src/beatmap');
 
 // Based on template beatmap file
-const TIMING_POINT_COUNT = 17;
-const TIMING_POINT_RANGE_START = 70165;
-const TIMING_POINT_RANGE_END = 109242;
-const TIMING_POINT_RANGE_LENGTH = 5;
-const HIT_OBJECT_COUNT = 881;
-const HIT_OBJECT_RANGE_START = 9959;
-const HIT_OBJECT_RANGE_END = 17139;
-const HIT_OBJECT_RANGE_LENGTH = 38;
-const ISOLATE_OFFSET_TIME = 7972; // Extracted from map editor
-const ISOLATE_RANGE_START = 8011;
-const ISOLATE_RANGE_END = 69857;
-const ISOLATE_RANGE_LENGTH = 390;
+const TIMING_POINT_COUNT = 15;
+const TIMING_POINT_RANGE_START = 43889;
+const TIMING_POINT_RANGE_END = 65832;
+const TIMING_POINT_RANGE_LENGTH = 4;
+const HIT_OBJECT_COUNT = 977;
+const HIT_OBJECT_RANGE_START = 79718;
+const HIT_OBJECT_RANGE_END = 81775;
+const HIT_OBJECT_RANGE_LENGTH = 16;
+const ISOLATE_OFFSET_TIME = 24839; // Extracted from map editor
+const ISOLATE_RANGE_START = 24861;
+const ISOLATE_RANGE_END = 27432;
+const ISOLATE_RANGE_LENGTH = 21;
 const ISOLATE_PREVIOUS_BEAT_LENGTH = -83.333333333333;
 const ISOLATE_PREVIOUS_VOLUME = 75;
 
@@ -460,8 +460,8 @@ describe('Beatmap Module Unit Test', () => {
 						expect(matchedHitObject.length).toBe(1);
 						expect(matchedHitObject[0].time).toBe(timingPointOffsetTime);
 
-						expect(timingPoint.beatLength).toBe(parseFloat((-100 / BeatmapManipulater.getTimeInterpolatedValue(timingPoint.time, startOffset, endOffset, 1.0, 2.0)).toFixed(12)));
-						expect(timingPoint.volume).toBe(Math.round(BeatmapManipulater.getTimeInterpolatedValue(timingPoint.time, startOffset, endOffset, 90, 40)));
+						expect(timingPoint.beatLength).toBe(parseFloat((-100 / BeatmapManipulater.getTimeInterpolatedValue(timingPointOffsetTime, ISOLATE_RANGE_START, ISOLATE_RANGE_END, 1.0, 2.0)).toFixed(12)));
+						expect(timingPoint.volume).toBe(Math.round(BeatmapManipulater.getTimeInterpolatedValue(timingPointOffsetTime, ISOLATE_RANGE_START, ISOLATE_RANGE_END, 90, 40)));
 						expect(timingPoint.effects).toBe(1);
 					}
 				});
