@@ -84,6 +84,7 @@ class Main {
 			optionKiai,
 			optionDense,
 			optionOffset,
+			optionOffsetPrecise,
 			optionExponential,
 			optionIgnoreVelocity,
 			optionIgnoreVolume,
@@ -137,6 +138,7 @@ class Main {
 				isKiai: optionKiai,
 				isDense: optionDense,
 				isOffset: optionOffset,
+				isOffsetPrecise: optionOffsetPrecise,
 				isExponential: optionExponential,
 				isIgnoreVelocity: optionIgnoreVelocity,
 				isIgnoreVolume: optionIgnoreVolume,
@@ -164,6 +166,7 @@ class Main {
 			endTimeInclude,
 			optionKiai,
 			optionOffset,
+			optionOffsetPrecise,
 			optionExponential,
 			optionIgnoreVelocity,
 			optionIgnoreVolume,
@@ -216,6 +219,7 @@ class Main {
 				includingEndTime: endTimeInclude,
 				isKiai: optionKiai,
 				isOffset: optionOffset,
+				isOffsetPrecise: optionOffsetPrecise,
 				isExponential: optionExponential,
 				isIgnoreVelocity: optionIgnoreVelocity,
 				isIgnoreVolume: optionIgnoreVolume,
@@ -238,6 +242,7 @@ class Main {
 			endPointTime,
 			endTimeInclude,
 			optionOffset,
+			optionOffsetPrecise,
 			optionBackup
 		} = datas;
 
@@ -273,6 +278,7 @@ class Main {
 				includingStartTime: startTimeInclude,
 				includingEndTime: endTimeInclude,
 				isOffset: optionOffset,
+				isOffsetPrecise: optionOffsetPrecise,
 				isBackup: optionBackup
 			});
 		} catch(err) {
@@ -287,11 +293,11 @@ class Main {
 	}
 
 	onBasicModeTrigger(e) {
-		this.win.setBounds({ width: 400, height: 520 });
+		this.win.setBounds({ width: 400, height: 520 + 18 });
 	}
 
 	onAdvancedModeTrigger(e) {
-		this.win.setBounds({ width: 400, height: 718 });
+		this.win.setBounds({ width: 400, height: 718 + 18 });
 	}
 
 	onClose(e) {

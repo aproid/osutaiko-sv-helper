@@ -157,7 +157,21 @@ class BeatmapManipulater {
 				const timingPoint = new TimingPoint;
 				timingPoint.beatLength = options.isIgnoreVelocity ? this.getInheritableBeatLength(hitObject.time) : (-100 / self.getTimeInterpolatedValue(hitObject.time, startTime, endTime, options.startVelocity, options.endVelocity, options.isExponential));
 				timingPoint.volume = options.isIgnoreVolume ? this.getInheritableVolume(hitObject.time) : (Math.round(self.getTimeInterpolatedValue(hitObject.time, startTime, endTime, options.startVolume, options.endVolume, options.isExponential)));
-				timingPoint.time = options.isOffset ? this.getSnapBasedOffsetTime(hitObject.time, -16) : hitObject.time;
+
+				if(options.isOffsetPrecise) {
+					const beatLength = this.getPreviousTimingPoint(hitObject.time, 1).beatLength / 2;
+
+					const prev = this.getPreviousHitObject(hitObject.time);
+					const next = this.getNextHitObject(hitObject.time);
+
+					const isOddAdjacent = (prev !== null && prev.time >= hitObject.time - Math.floor(beatLength) && this.getSnap(prev.time) === 12)
+									   || (next !== null && next.time <= hitObject.time + Math.ceil(beatLength) && this.getSnap(next.time) === 12);
+
+					timingPoint.time = this.getSnap(hitObject.time) === 12 || isOddAdjacent ? this.getSnapBasedOffsetTime(hitObject.time, -12, 12) : this.getSnapBasedOffsetTime(hitObject.time, -16);
+				} else {
+					timingPoint.time = options.isOffset ? this.getSnapBasedOffsetTime(hitObject.time, -16) : hitObject.time;
+				}
+
 				timingPoint.effects = options.isKiai ? 1 : 0;
 				timingPoints.push(timingPoint);
 			}
@@ -171,7 +185,11 @@ class BeatmapManipulater {
 		const self = this.constructor;
 		
 		if(options.isOffset) {
-			startTime = this.getSnapBasedOffsetTime(startTime, -16);
+			if(options.isOffsetPrecise)
+				startTime = this.getSnapBasedOffsetTime(startTime, -12, 12);
+			else
+				startTime = this.getSnapBasedOffsetTime(startTime, -16);
+
 			endTime = this.getSnapBasedOffsetTime(endTime, -16);
 		}
 
@@ -190,7 +208,11 @@ class BeatmapManipulater {
 
 	remove(startTime, endTime, options={}) {
 		if(options.isOffset) {
-			startTime = this.getSnapBasedOffsetTime(startTime, -16);
+			if(options.isOffsetPrecise)
+				startTime = this.getSnapBasedOffsetTime(startTime, -12, 12);
+			else
+				startTime = this.getSnapBasedOffsetTime(startTime, -16);
+			
 			endTime = this.getSnapBasedOffsetTime(endTime, -16);
 		}
 
@@ -224,6 +246,27 @@ class BeatmapManipulater {
 		return null;
 	}
 
+	getPreviousHitObject(time) {
+		const hitObjects = this.beatmap.getHitObjectsInRange(-Infinity, time, true, false);
+
+		for(let i = hitObjects.length - 1; i >= 0; i--) {
+			const hitObject = hitObjects[i];
+
+			return hitObject;
+		}
+
+		return null;
+	}
+
+	getNextHitObject(time) {
+		const hitObjects = this.beatmap.getHitObjectsInRange(time, Infinity, false, true);
+
+		if(hitObjects.length < 1)
+			return null;
+
+		return hitObjects[0];
+	}
+
 	getInheritableBeatLength(time) {
 		const timingPoint = this.getPreviousTimingPoint(time, 0);
 
@@ -242,7 +285,7 @@ class BeatmapManipulater {
 		return timingPoint.volume;
 	}
 
-	getSnapBasedOffsetTime(time, snap) {
+	getSnap(time) {
 		const timingPoint = this.getPreviousTimingPoint(time, 1);
 
 		if(timingPoint === null)
@@ -250,6 +293,22 @@ class BeatmapManipulater {
 
 		let i = Decimal(timingPoint.time);
 		let j = Decimal(timingPoint.beatLength).div(16);
+
+		while(i.lessThan(time)) {
+			i = i.add(j);
+		}
+
+		return time === i.floor().toNumber() ? 16 : 12;
+	}
+
+	getSnapBasedOffsetTime(time, snap, stepBy=16) {
+		const timingPoint = this.getPreviousTimingPoint(time, 1);
+
+		if(timingPoint === null)
+			return NaN;
+
+		let i = Decimal(timingPoint.time);
+		let j = Decimal(timingPoint.beatLength).div(stepBy);
 
 		while(i.lessThan(time)) {
 			i = i.add(j);

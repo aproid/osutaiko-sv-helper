@@ -223,6 +223,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	const $optionKiai = document.getElementById('op_kiai');
 	const $optionDense = document.getElementById('op_dense');
 	const $optionOffset = document.getElementById('op_offset');
+	const $optionOffsetPrecise = document.getElementById('op_offset_precise');
 	const $optionExponential = document.getElementById('op_exponential');
 	const $optionIgnoreVelocity = document.getElementById('op_ignr_velocity');
 	const $optionIgnoreVolume = document.getElementById('op_ignr_volume');
@@ -240,6 +241,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	$removeButton.addEventListener('click', onRemoveClick);
 	$backupButton.addEventListener('click', onBackupClick);
 
+	$optionOffsetPrecise.addEventListener('change', onOffsetPreciseChange);
 	$optionIgnoreVelocity.addEventListener('change', onIgnoreVelocityChange);
 	$optionIgnoreVolume.addEventListener('change', onIgnoreVolumeChange);
 
@@ -295,6 +297,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			optionKiai: d.optionKiai,
 			optionDense: d.optionDense,
 			optionOffset: d.optionOffset,
+			optionOffsetPrecise: d.optionOffsetPrecise,
 			optionExponential: d.optionExponential,
 			optionIgnoreVelocity: d.optionIgnoreVelocity,
 			optionIgnoreVolume: d.optionIgnoreVolume,
@@ -317,6 +320,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			endTimeInclude: d.endTimeInclude,
 			optionKiai: d.optionKiai,
 			optionOffset: d.optionOffset,
+			optionOffsetPrecise: d.optionOffsetPrecise,
 			optionExponential: d.optionExponential,
 			optionIgnoreVelocity: d.optionIgnoreVelocity,
 			optionIgnoreVolume: d.optionIgnoreVolume,
@@ -334,6 +338,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			endPointTime: d.endPointTime,
 			endTimeInclude: d.endTimeInclude,
 			optionOffset: d.optionOffset,
+			optionOffsetPrecise: d.optionOffsetPrecise,
 			optionBackup: d.optionBackup
 		});
 	}
@@ -358,6 +363,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		const optionKiai = $optionKiai.checked;
 		const optionDense = $optionDense.checked;
 		const optionOffset = $optionOffset.checked;
+		const optionOffsetPrecise = $optionOffsetPrecise.checked;
 		const optionExponential = $optionExponential.checked;
 		const optionIgnoreVelocity = $optionIgnoreVelocity.checked;
 		const optionIgnoreVolume = $optionIgnoreVolume.checked;
@@ -376,6 +382,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			optionKiai,
 			optionDense,
 			optionOffset,
+			optionOffsetPrecise,
 			optionExponential,
 			optionIgnoreVelocity,
 			optionIgnoreVolume,
@@ -397,6 +404,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		$optionKiai.checked = datas.optionKiai;
 		$optionDense.checked = datas.optionDense;
 		$optionOffset.checked = datas.optionOffset;
+		$optionOffsetPrecise.checked = datas.optionOffsetPrecise;
 		$optionExponential.checked = datas.optionExponential;
 		$optionIgnoreVelocity.checked = datas.optionIgnoreVelocity;
 		$optionIgnoreVolume.checked = datas.optionIgnoreVolume;
@@ -404,6 +412,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
 		$optionIgnoreVelocity.dispatchEvent(new Event('change'));
 		$optionIgnoreVolume.dispatchEvent(new Event('change'));
+	}
+
+	function onOffsetPreciseChange() {
+		$optionOffset.checked = true;
 	}
 
 	function onIgnoreVelocityChange() {

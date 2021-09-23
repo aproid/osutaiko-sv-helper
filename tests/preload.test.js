@@ -31,6 +31,7 @@ describe('DOM Unit Test', () => {
 	let $optionKiai;
 	let $optionDense;
 	let $optionOffset;
+	let $optionOffsetPrecise;
 	let $optionExponential;
 	let $optionIgnoreVelocity;
 	let $optionIgnoreVolume;
@@ -53,6 +54,7 @@ describe('DOM Unit Test', () => {
 			optionKiai: [ false, [ () => $optionKiai.checked = true, true ] ],
 			optionDense: [ false, [ () => $optionDense.checked = true, true ] ],
 			optionOffset: [ false, [ () => $optionOffset.checked = true, true ] ],
+			optionOffsetPrecise: [ false, [ () => $optionOffsetPrecise.checked = true, true ] ],
 			optionExponential: [ false, [ () => $optionExponential.checked = true, true ] ],
 			optionIgnoreVelocity: [ false, [ () => $optionIgnoreVelocity.checked = true, true ] ],
 			optionIgnoreVolume: [ false, [ () => $optionIgnoreVolume.checked = true, true ] ],
@@ -107,6 +109,7 @@ describe('DOM Unit Test', () => {
 		$optionKiai = document.getElementById('op_kiai');
 		$optionDense = document.getElementById('op_dense');
 		$optionOffset = document.getElementById('op_offset');
+		$optionOffsetPrecise = document.getElementById('op_offset_precise');
 		$optionExponential = document.getElementById('op_exponential');
 		$optionIgnoreVelocity = document.getElementById('op_ignr_velocity');
 		$optionIgnoreVolume = document.getElementById('op_ignr_volume');
@@ -139,6 +142,7 @@ describe('DOM Unit Test', () => {
 				optionKiai: p.optionKiai,
 				optionDense: p.optionDense,
 				optionOffset: p.optionOffset,
+				optionOffsetPrecise: p.optionOffsetPrecise,
 				optionExponential: p.optionExponential,
 				optionIgnoreVelocity: p.optionIgnoreVelocity,
 				optionIgnoreVolume: p.optionIgnoreVolume,
@@ -158,6 +162,7 @@ describe('DOM Unit Test', () => {
 				endPointTime: p.endPointTime,
 				endTimeInclude: p.endTimeInclude,
 				optionOffset: p.optionOffset,
+				optionOffsetPrecise: p.optionOffsetPrecise,
 				optionBackup: p.optionBackup
 			});
 		});
