@@ -4,6 +4,7 @@
 	--color-highlight: #ff66ab;
 	--color-background: #2e1f25;
 	--color-darken: #3b272f;
+	--color-lighten: #b3306b;
 	--color-error: #c1090b;
 }
 
@@ -12,7 +13,7 @@
 	font-weight: normal;
 	font-style: normal;
 
-	src: url('./fonts/VarelaRound-Regular.ttf') format('truetype');
+	src: url('../fonts/VarelaRound-Regular.ttf') format('truetype');
 }
 
 * {
@@ -89,6 +90,9 @@ input::-webkit-input-placeholder {
 	line-height: 1;
 	background:  var(--color-darken);
 }
+.field input[disabled] {
+	opacity: .4;
+}
 .field-group {
 	display: flex;
 	margin: 0 -10px;
@@ -99,20 +103,26 @@ input::-webkit-input-placeholder {
 }
 
 .file {
-	display: flex;
-	align-items: center;
 	overflow: hidden;
-	margin: 7px 0 0;
 	border-radius:  2px;
-	height: 25px;
+	margin: 7px 0 0;
 	font-size: 10px;
+	text-align:  center;
 	background:  var(--color-darken);
+}
+.file.active .file-icon {
+	opacity: 1;
 }
 .file input {
 	display: none;
 }
+.file-icon {
+	margin: 7px 0 -2px;
+	font-size: 18px;
+	opacity: .4;
+}
 .file-label {
-	flex: 1 0 0%;
+	display: block;
 	padding: 7px;
 	overflow: hidden;
 	white-space: nowrap;
@@ -123,8 +133,10 @@ input::-webkit-input-placeholder {
 	opacity: .4;
 }
 .file-select {
-	padding: 0 18px;
-	height: 100%;
+	display: block;
+	padding: 3px 0;
+	width: 100%;
+	font-size: 12px;
 	background: var(--color-highlight);
 	color: #ffffff;
 	cursor: pointer;
@@ -158,6 +170,9 @@ input::-webkit-input-placeholder {
 .checkbox-group {
 	display: flex;
 }
+.checkbox-group + .checkbox-group .checkbox {
+	margin-top:  3px;
+}
 .checkbox-group .checkbox {
 	margin-right: 16px;
 }
@@ -167,26 +182,107 @@ input::-webkit-input-placeholder {
 	width: 100%;
 	height: 32px;
 	color: #ffffff;
-	font-size: 12px;
+	font-size: 13px;
 	cursor: pointer;
 }
 .btn-group {
 	display: flex;
-	margin: 0 -4px;
+	margin: 0 -4px 8px;
 }
 .btn-group .btn {
 	margin-left: 4px;
 	margin-right: 4px;
 }
-.btn-apply {
-	margin: 0 0 8px;
-	height: 40px;
-	font-size: 14px;
+.btn-overwrite {
 	background: var(--color-highlight);
+}
+.btn-modify {
+	background: var(--color-lighten);
 }
 .btn-remove {
 	background: var(--color-error);
 }
 .btn-backup {
 	background: var(--color-secondary);
+}
+
+.profile select {
+	border-radius: 2px;
+	margin: 7px 0 0;
+	padding: 0 1px 0 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	width: 100%;
+	height: 100px;
+	font-size: 10px;
+	background: var(--color-darken);
+}
+.profile select::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+	background: transparent;
+}
+.profile select::-webkit-scrollbar-thumb {
+    border: 3px solid rgba(0,0,0,0);
+	border-radius: 5px;
+  	background-clip: padding-box;
+	background-color: var(--color-background);
+}
+.profile option {
+	padding: 4px 7px;
+	overflow-x: hidden;
+	white-space: nowrap;
+	color: var(--color-primary) !important;
+}
+.profile select:not(:focus) option:checked {
+    box-shadow: 0 0 100vw 100vw var(--color-primary) inset;
+    font-weight: 700;
+}
+.profile select:focus option:checked {
+    box-shadow: 0 0 100vw 100vw var(--color-highlight) inset;
+}
+.profile-btn {
+	flex: 1 0 auto;
+	border-radius: 2px;
+	margin: 7px 3px 0;
+	padding: 3px 0;
+	color: #ffffff;
+	font-size: 12px;
+	cursor: pointer;
+}
+.profile-btn-group {
+	display: flex;
+	margin: 0 -3px;
+}
+.profile-btn-save {
+	background: var(--color-highlight);
+}
+.profile-btn-load {
+	background: var(--color-lighten);
+}
+.profile-btn-delete {
+	background: var(--color-error);
+}
+
+.mode-toggler {
+	display: inline-block;
+	margin: 7px 0 0;
+	color: var(--color-highlight);
+	font-size: 10px;
+	float: right;
+	cursor: pointer;
+}
+.mode-advanced .mode-toggler::before {
+	content: 'Basic Mode...';
+}
+.mode-basic .mode-toggler::before {
+	content: 'Advanced Mode...';
+}
+.mode-item-basic,
+.mode-item-advanced {
+	display: none;
+}
+.mode-basic .mode-item-basic,
+.mode-advanced .mode-item-advanced {
+	display: block;
 }
