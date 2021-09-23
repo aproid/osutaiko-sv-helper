@@ -52,13 +52,8 @@ class Beatmap {
 		let { objects, startIndex, endIndex } = this.parseCommaSeperatedTag(this.constructor.TIMING_POINTS_TAG);
 
 		objects = objects.reduce((accumulator, timingPoint) => {
-			try {
 			if(timingPoint.length >= 8)
 				accumulator.push(TimingPoint.fromArray(timingPoint));
-			} catch(e) {
-				console.log(timingPoint);
-				throw e;
-			}
 
 			return accumulator;
 		}, []);
