@@ -9,7 +9,7 @@ const { parseIntSafely, parseFloatSafely, parseTimeSafely } = require('./src/typ
 class Main {
 	constructor() {
 		this.win = new BrowserWindow({
-			width: 400,
+			width: 404,
 			height: 520,
 			maximizable: false,
 			fullscreenable: false,
@@ -293,11 +293,11 @@ class Main {
 	}
 
 	onBasicModeTrigger(e) {
-		this.win.setBounds({ width: 400, height: 520 + 18 });
+		this.win.setBounds({ width: 404, height: 520 });
 	}
 
 	onAdvancedModeTrigger(e) {
-		this.win.setBounds({ width: 400, height: 718 + 18 });
+		this.win.setBounds({ width: 404, height: 718 });
 	}
 
 	onClose(e) {

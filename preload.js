@@ -241,6 +241,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	$removeButton.addEventListener('click', onRemoveClick);
 	$backupButton.addEventListener('click', onBackupClick);
 
+	$optionOffset.addEventListener('change', onOffsetChange);
 	$optionOffsetPrecise.addEventListener('change', onOffsetPreciseChange);
 	$optionIgnoreVelocity.addEventListener('change', onIgnoreVelocityChange);
 	$optionIgnoreVolume.addEventListener('change', onIgnoreVolumeChange);
@@ -414,8 +415,14 @@ window.addEventListener('DOMContentLoaded', () => {
 		$optionIgnoreVolume.dispatchEvent(new Event('change'));
 	}
 
+	function onOffsetChange() {
+		if(!$optionOffset.checked)
+			$optionOffsetPrecise.checked = false;
+	}
+
 	function onOffsetPreciseChange() {
-		$optionOffset.checked = true;
+		if($optionOffsetPrecise.checked)
+			$optionOffset.checked = true;
 	}
 
 	function onIgnoreVelocityChange() {
