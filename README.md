@@ -9,7 +9,7 @@ Simple utility for adjusting slider velocity for osu!taiko mapping
 * Node.js 14.16.0 or later
 
 ## Build
-#### Serve Application For Development
+#### Serve Application
 ```
 $ cd PROJECT_FOLDER
 $ npm install
