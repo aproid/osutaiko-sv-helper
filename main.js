@@ -305,29 +305,16 @@ class Main {
 	}
 }
 
-if(!__TEST__) {
-	function createInstance() {
-		const main = new Main();
+let main;
 
-		return main;
-	}
+app.on('ready', () => {
+	main = new Main;
+});
 
-	app.whenReady().then(() => {
-		createInstance();
-		
-		app.on('activate', () => {
-			if(BrowserWindow.getAllWindows().length === 0)
-				createInstance();
-		});
-	});
-
-	app.on('window-all-closed', () => {
-		if(process.platform !== 'darwin')
-			app.quit()
-	});
-};
+app.on('window-all-closed', () => {
+	app.quit()
+});
 
 module.exports = {
-	default: Main,
-	Main
+	default: main
 };

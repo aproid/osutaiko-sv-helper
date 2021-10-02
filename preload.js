@@ -2,213 +2,208 @@ const { ipcRenderer } = require('electron');
 
 const { __VERSION__ } = require('./src/env');
 
-window.addEventListener('DOMContentLoaded', () => {
-	class Storage {
-		static instance;
+class Storage {
+	static instance;
 
-		constructor() {
-			if(this.constructor.instance)
-				return this.constructor.instance;
+	constructor() {
+		if(this.constructor.instance)
+			return this.constructor.instance;
 
-			this._storage = {};
+		this._storage = {};
 
-			if(localStorage[__VERSION__]) {
-				this._storage = JSON.parse(localStorage[__VERSION__]);
-			}
-
-			this.constructor.instance = this;
+		if(localStorage[__VERSION__]) {
+			this._storage = JSON.parse(localStorage[__VERSION__]);
 		}
 
-		save() {
-			localStorage[__VERSION__] = JSON.stringify(this._storage);
-		}
+		this.constructor.instance = this;
+	}
 
-		clear() {
-			localStorage.clear();
-		}
+	save() {
+		localStorage[__VERSION__] = JSON.stringify(this._storage);
+	}
 
-		static getAccess(callback) {
-			const storage = this.getInstance();
-			const storageOriginal = JSON.stringify(storage._storage);
+	clear() {
+		localStorage.clear();
+	}
 
-			const ret = callback(storage._storage);
+	static getAccess(callback) {
+		const storage = this.getInstance();
+		const storageOriginal = JSON.stringify(storage._storage);
 
-			try {
-				storage.save();
+		const ret = callback(storage._storage);
 
-				return ret;
-			} catch(e) {
-				storage._storage = JSON.parse(storageOriginal);
+		try {
+			storage.save();
 
-				localStorage[__VERSION__] = storageOriginal;
+			return ret !== undefined ? JSON.parse(JSON.stringify(ret)) : ret;
+		} catch(e) {
+			storage._storage = JSON.parse(storageOriginal);
 
-				throw e;
-			}
-		}
+			localStorage[__VERSION__] = storageOriginal;
 
-		static getInstance() {
-			return new this;
+			throw e;
 		}
 	}
 
-	class FileInput {
-		constructor(selector) {
-			const self = this;
+	static getInstance() {
+		return new this;
+	}
+}
 
-			this._value = undefined;
+class FileUI {
+	constructor(selector) {
+		const self = this;
 
-			this.$el = document.querySelector(selector);
-			this.$label = this.$el.querySelector('.file-label');
-			this.$button = this.$el.querySelector('.file-select');
+		this._value = undefined;
 
-			this.$el.addEventListener('drop', onDragDrop);
-			this.$el.addEventListener('dragover', onDragOver);
-			this.$button.addEventListener('click', onButtonClick);
+		this.$el = document.querySelector(selector);
+		this.$label = this.$el.querySelector('.file-label');
+		this.$button = this.$el.querySelector('.file-select');
 
-			function onDragDrop(e) {
-				e.preventDefault();
-				e.stopPropagation();
+		this.$el.addEventListener('drop', onDragDrop);
+		this.$el.addEventListener('dragover', onDragOver);
+		this.$button.addEventListener('click', onButtonClick);
 
-				if(e.dataTransfer.files.length > 0) {
-					const file = e.dataTransfer.files[0];
+		function onDragDrop(e) {
+			e.preventDefault();
+			e.stopPropagation();
 
-					if(file) setFile(file);
-				}
-			}
-
-			function onDragOver(e) {
-				e.preventDefault();
-				e.stopPropagation();
-			}
-
-			function onButtonClick(e) {
-				const file = ipcRenderer.sendSync('main:file');
+			if(e.dataTransfer.files.length > 0) {
+				const file = e.dataTransfer.files[0];
 
 				if(file) setFile(file);
 			}
-
-			function setFile(file) {
-				self.$el.classList.add('active');
-				self.$label.innerText = file.name;
-
-				self._value = file.path;
-			}
 		}
 
-		value() {
-			return this._value;
+		function onDragOver(e) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		function onButtonClick(e) {
+			const file = ipcRenderer.sendSync('main:file');
+
+			if(file) setFile(file);
+		}
+
+		function setFile(file) {
+			self.$el.classList.add('active');
+			self.$label.innerText = file.name;
+
+			self._value = file.path;
 		}
 	}
 
-	class ProfileManager {
-		constructor(selector) {
-			const self = this;
+	value() {
+		return this._value;
+	}
+}
 
-			this._profiles = Storage.getAccess((storage) => {
-				if(storage.profiles === undefined)
-					storage.profiles = {};
+class ProfileUI {
+	constructor(selector) {
+		const self = this;
 
-				return storage.profiles;
-			});
+		this._profiles = Storage.getAccess((storage) => {
+			if(storage.profiles === undefined)
+				storage.profiles = {};
 
-			this.$el = document.querySelector(selector);
-			this.$input = this.$el.querySelector('input');
-			this.$select = this.$el.querySelector('select');
-			this.$saveButton = this.$el.querySelector('.profile-btn-save');
-			this.$loadButton = this.$el.querySelector('.profile-btn-load');
-			this.$deleteButton = this.$el.querySelector('.profile-btn-delete');
+			return storage.profiles;
+		});
 
-			this.$select.addEventListener('change', onSelectChange);
-			this.$saveButton.addEventListener('click', onSaveButtonClick);
-			this.$loadButton.addEventListener('click', onLoadButtonClick);
-			this.$deleteButton.addEventListener('click', onDeleteButtonClick);
+		this.$el = document.querySelector(selector);
+		this.$input = this.$el.querySelector('input');
+		this.$select = this.$el.querySelector('select');
+		this.$saveButton = this.$el.querySelector('.profile-btn-save');
+		this.$loadButton = this.$el.querySelector('.profile-btn-load');
+		this.$deleteButton = this.$el.querySelector('.profile-btn-delete');
+
+		this.$select.addEventListener('change', onSelectChange);
+		this.$saveButton.addEventListener('click', onSaveButtonClick);
+		this.$loadButton.addEventListener('click', onLoadButtonClick);
+		this.$deleteButton.addEventListener('click', onDeleteButtonClick);
+
+		updateView();
+
+		function onSelectChange(e) {
+			self.$input.value = self.$select.value;
+		}
+
+		function onSaveButtonClick(e) {
+			let profileName = self.$input.value;
+			let profileDatas;
+
+			if(profileName === undefined || profileName === '')
+				return;
+
+			if(self.onSave && typeof self.onSave === 'function')
+				profileDatas = self.onSave(profileName);
+
+			self.saveProfile(profileName, profileDatas);
 
 			updateView();
-
-			function onSelectChange(e) {
-				self.$input.value = self.$select.value;
-			}
-
-			function onSaveButtonClick(e) {
-				const profileName = self.$input.value;
-				const profileDatas = getInputDatas();
-
-				delete profileDatas['beatmapPath'];
-
-				self.saveProfile(profileName, profileDatas);
-
-				updateView();
-			}
-
-			function onLoadButtonClick(e) {
-				const profileName = self.$input.value;
-
-				self.loadProfile(profileName);
-			}
-
-			function onDeleteButtonClick(e) {
-				const profileName = self.$input.value;
-
-				self.deleteProfile(profileName);
-
-				updateView();
-			}
-
-			function updateView() {
-				self.$select.innerHTML = '';
-
-				for(let i in self._profiles) {
-					const $option = document.createElement('option');
-
-					$option.innerText = i;
-
-					self.$select.append($option);
-				}
-			}
 		}
 
-		saveProfile(name, datas) {
-			if(name !== undefined && name !== '') {
-				return Storage.getAccess((storage) => {
-					storage.profiles[name] = datas;
-				});
-			}
+		function onLoadButtonClick(e) {
+			let profileName = self.$input.value;
+			let profileDatas;
 
-			return false;
+			if(profileName === undefined || profileName === '')
+				return;
+
+			profileDatas = self.loadProfile(profileName);
+
+			if(self.onLoad && typeof self.onLoad === 'function')
+				self.onLoad(profileDatas);
 		}
 
-		loadProfile(name) {
-			if(name !== undefined && name !== '') {
-				return Storage.getAccess((storage) => {
-					const profile = storage.profiles[name];
+		function onDeleteButtonClick(e) {
+			let profileName = self.$input.value;
 
-					setInputDatas(profile);
+			if(profileName === undefined || profileName === '')
+				return;
 
-					return profile;
-				});
-			}
+			self.deleteProfile(profileName);
 
-			return false;
+			updateView();
 		}
 
-		deleteProfile(name) {
-			if(name !== undefined && name !== '') {
-				return Storage.getAccess((storage) => {
-					delete storage.profiles[name];
-				});
-			}
+		function updateView() {
+			self.$select.innerHTML = '';
 
-			return false;
+			for(let i in self._profiles) {
+				const $option = document.createElement('option');
+
+				$option.innerText = i;
+
+				self.$select.append($option);
+			}
 		}
 	}
 
-	addIPCTrigger('.titlebar-close', 'click', 'main:close');
+	saveProfile(name, datas) {
+		Storage.getAccess((storage) => storage.profiles[name] = datas);
 
-	const beatmapInput = new FileInput('.file');
+		return this._profiles[name] = datas;
+	}
 
-	const profileManager = new ProfileManager('.profile');
+	loadProfile(name) {
+		return this._profiles[name];
+	}
+
+	deleteProfile(name) {
+		Storage.getAccess((storage) => delete storage.profiles[name]);
+
+		return delete this._profiles[name];
+	}
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+	const fileUI = new FileUI('.file');
+	const profileUI = new ProfileUI('.profile');
 
 	const $wrap = document.querySelector('.wrap');
+
+	const $closeButton = document.querySelector('.titlebar-close');
 
 	const $startPointTime = document.getElementById('sp_time');
 	const $startPointVelocity = document.getElementById('sp_velocity');
@@ -236,6 +231,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	const $modeToggler = document.querySelector('.mode-toggler');
 
+	$closeButton.addEventListener('click', onCloseClick);
+
 	$overwriteButton.addEventListener('click', onOverwriteClick);
 	$modifyButton.addEventListener('click', onModifyClick);
 	$removeButton.addEventListener('click', onRemoveClick);
@@ -245,6 +242,9 @@ window.addEventListener('DOMContentLoaded', () => {
 	$optionOffsetPrecise.addEventListener('change', onOffsetPreciseChange);
 	$optionIgnoreVelocity.addEventListener('change', onIgnoreVelocityChange);
 	$optionIgnoreVolume.addEventListener('change', onIgnoreVolumeChange);
+
+	profileUI.onSave = getInputDatas;
+	profileUI.onLoad = setInputDatas;
 
 	$modeToggler.addEventListener('click', onModeTogglerClick);
 
@@ -265,21 +265,23 @@ window.addEventListener('DOMContentLoaded', () => {
 			$wrap.classList.remove('mode-advanced');
 			$wrap.classList.add('mode-basic');
 
-			_mode = mode;
-		} else if(mode === 'advanced') {
+			_mode = 'basic';
+		} else {
 			ipcRenderer.send('main:advanced');
 
 			$wrap.classList.remove('mode-basic');
 			$wrap.classList.add('mode-advanced');
 
-			_mode = mode;
+			_mode = 'advanced';
 		}
 
-		if(_mode) {
-			Storage.getAccess((storage) => {
-				storage.mode = _mode;
-			});
-		}
+		Storage.getAccess((storage) => {
+			storage.mode = _mode;
+		});
+	}
+
+	function onCloseClick() {
+		ipcRenderer.send('main:close');
 	}
 
 	function onOverwriteClick() {
@@ -349,7 +351,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	}
 
 	function getInputDatas() {
-		const beatmapPath = beatmapInput.value();
+		const beatmapPath = fileUI.value();
 
 		const startPointTime = $startPointTime.value;
 		const startPointVelocity = $startPointVelocity.value;
@@ -447,13 +449,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	function onModeTogglerClick() {
 		const isBasic = $wrap.classList.contains('mode-basic');
-		const isAdvanced = $wrap.classList.contains('mode-advanced');
 
-		if(isBasic) setMode('advanced');
-		if(isAdvanced) setMode('basic');
+		if(isBasic) {
+			setMode('advanced');
+		} else {
+			setMode('basic');
+		}
 	}
 });
 
-function addIPCTrigger(selector, event, ipcCommand, isSync=false) {
-	return document.querySelector(selector).addEventListener(event, () => ipcRenderer[isSync ? 'sendSync' : 'send'](ipcCommand));
-}
+module.exports = {
+	Storage,
+	FileUI,
+	ProfileUI
+};
