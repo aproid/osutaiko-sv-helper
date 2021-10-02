@@ -3,10 +3,9 @@ const electronPath = require('electron');
 const path = require('path');
 const fs = require('fs');
 
-test('Application Integrated Test', () => {
+describe('Application E2E Test', () => {
 	jest.setTimeout(10000);
 
-	/*
 	const app = new Application({
 		path: electronPath,
 		args: [ path.join(__dirname, '../main.js') ]
@@ -29,5 +28,4 @@ test('Application Integrated Test', () => {
 			expect(windowCount).toBe(1);
 		});
 	});
-	*/
 });
