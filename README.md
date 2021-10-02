@@ -11,16 +11,16 @@ Simple utility for adjusting slider velocity for osu!taiko mapping
 ## Build
 #### Serve Application
 ```
-$ cd PROJECT_FOLDER
-$ npm install
-$ npm test
-$ npm start
+> cd PROJECT_FOLDER
+> npm install
+> npm test
+> npm start
 ```
 #### Build Executable File
 ```
-$ cd PROJECT_FOLDER
-$ npm install
-$ npm test
-$ npm run build:win64  ---  64bit
-$ npm run build:win32  ---  32bit
+> cd PROJECT_FOLDER
+> npm install
+> npm test
+> npm run build:win64  ---  64bit
+> npm run build:win32  ---  32bit
 ```
