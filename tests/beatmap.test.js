@@ -3,24 +3,443 @@ const fs = require('fs');
 
 const { Beatmap, BeatmapManipulater, TimingPoint, HitObject } = require('../src/beatmap');
 
-// Based on template beatmap file
-const TIMING_POINT_COUNT = 15;
-const TIMING_POINT_RANGE_START = 43889;
-const TIMING_POINT_RANGE_END = 65832;
-const TIMING_POINT_RANGE_LENGTH = 4;
-const HIT_OBJECT_COUNT = 977;
-const HIT_OBJECT_RANGE_START = 79718;
-const HIT_OBJECT_RANGE_END = 81775;
-const HIT_OBJECT_RANGE_LENGTH = 16;
-const ISOLATE_OFFSET_TIME = 24839; // Extracted from map editor
-const ISOLATE_RANGE_START = 24861;
-const ISOLATE_RANGE_END = 27432;
-const ISOLATE_RANGE_LENGTH = 21;
-const ISOLATE_PREVIOUS_BEAT_LENGTH = -83.333333333333;
-const ISOLATE_PREVIOUS_VOLUME = 75;
+describe('Beatmap Module Unit Test', () => {
+	jest.setTimeout(10000);
+
+	test('Timing Point', () => {
+		const mockTimingPointRaw = '1,307.692307692308,4,1,0,70,1,0';
+		const mockTimingPoint = TimingPoint.fromArray(mockTimingPointRaw.split(','));
+
+		expect(mockTimingPoint.time).toBe(1);
+		expect(mockTimingPoint.beatLength).toBe(307.692307692308);
+		expect(mockTimingPoint.meter).toBe(4);
+		expect(mockTimingPoint.sampleSet).toBe(1);
+		expect(mockTimingPoint.sampleIndex).toBe(0);
+		expect(mockTimingPoint.volume).toBe(70);
+		expect(mockTimingPoint.uninherited).toBe(1);
+		expect(mockTimingPoint.effects).toBe(0);
+		expect(mockTimingPoint.toString()).toBe(mockTimingPointRaw);
+	});
+
+	test('Hit Object', () => {
+		const hitObjectTypes = {
+			note: [ 0, 1, 5 ],
+			slider: [ 2, 6 ],
+			spinner: [ 8, 12 ]
+		};
+
+		const hitObjectSounds = {
+			kat: [ 2, 6, 8, 12 ],
+			don: [ 0, 4 ],
+			big: [ 4, 6, 12 ]
+		};
+
+		const mockHitObjectRaw = '256,192,1,1,8,0:0:0:0:';
+		const mockHitObject = HitObject.fromArray(mockHitObjectRaw.split(','));
+
+		expect(mockHitObject.x).toBe(256);
+		expect(mockHitObject.y).toBe(192);
+		expect(mockHitObject.time).toBe(1);
+		expect(mockHitObject.type).toBe(1);
+		expect(mockHitObject.hitSound).toBe(8);
+		expect(mockHitObject.extra).toBe('0:0:0:0:');
+		expect(mockHitObject.toString()).toBe(mockHitObjectRaw);
+
+		for(let i in hitObjectTypes) {
+			for(let j in hitObjectTypes[i]) {
+				mockHitObject.type = hitObjectTypes[i][j];
+
+				if(i === 'note') expect(mockHitObject.isNote()).toBe(true);
+				else if(i === 'slider') expect(mockHitObject.isSlider()).toBe(true);
+				else if(i === 'spinner') expect(mockHitObject.isSpinner()).toBe(true);
+			}
+		}
+
+		for(let i in hitObjectSounds) {
+			for(let j in hitObjectSounds[i]) {
+				mockHitObject.hitSound = hitObjectSounds[i][j];
+
+				if(i === 'kat') expect(mockHitObject.isKat()).toBe(true);
+				else if(i === 'don') expect(mockHitObject.isDon()).toBe(true);
+				else if(i === 'big') expect(mockHitObject.isBigNote()).toBe(true);
+			}
+		}
+	});
+
+	describe('Beatmap', () => {
+		let mockBeatmapPath = path.join(__dirname, './beatmap.test.osu');
+		let mockBeatmap;
+
+		let templateBeatmapPath = path.join(__dirname, './beatmap.template.osu');
+		let templateBeatmapRawString;
+
+		let totalTimingPoint;
+		let firstTimingPoint;
+		let lastTimingPoint;
+
+		let totalHitObject;
+		let firstHitObject;
+		let lastHitObject;
+
+		beforeAll(() => {
+			templateBeatmapRawString = fs.readFileSync(templateBeatmapPath).toString();
+		});
+
+		beforeEach(() => {
+			fs.writeFileSync(mockBeatmapPath, templateBeatmapRawString);
+
+			mockBeatmap = new Beatmap(mockBeatmapPath);
+
+			totalTimingPoint = mockBeatmap.timingPoints.length;
+			firstTimingPoint = mockBeatmap.timingPoints[0];
+			lastTimingPoint = mockBeatmap.timingPoints.slice(-1)[0];
+
+			totalHitObject = mockBeatmap.hitObjects.length;
+			firstHitObject = mockBeatmap.hitObjects[0];
+			lastHitObject = mockBeatmap.hitObjects.slice(-1)[0];
+		});
+
+		afterAll(() => {
+			fs.rmSync(mockBeatmapPath);
+		});
+
+		test('Parse', () => {
+			expect(mockBeatmap.path).toBe(mockBeatmapPath);
+			expect(mockBeatmap.rawString).toBe(templateBeatmapRawString);
+
+			expect(mockBeatmap.timingPoints.length).toBeGreaterThan(0);
+			expect(mockBeatmap.timingPointStartIndex).toBeGreaterThan(0);
+			expect(mockBeatmap.timingPointEndIndex).toBeGreaterThan(0);
+
+			expect(mockBeatmap.hitObjects.length).toBeGreaterThan(0);
+			expect(mockBeatmap.hitObjectStartIndex).toBeGreaterThan(0);
+			expect(mockBeatmap.hitObjectEndIndex).toBeGreaterThan(0);
+
+			expect(mockBeatmap.timingPointStartIndex < mockBeatmap.timingPointEndIndex).toBe(true);
+			expect(mockBeatmap.hitObjectStartIndex < mockBeatmap.hitObjectEndIndex).toBe(true);
+		});
+
+		test('Write', () => {
+			let savedRawString;
+
+			mockBeatmap.rawString = '';
+			mockBeatmap.write();
+
+			savedRawString = fs.readFileSync(mockBeatmapPath).toString();
+
+			expect(savedRawString).not.toBe(templateBeatmapRawString);
+			expect(savedRawString).toBe(mockBeatmap.rawString);
+		});
+
+		test('Range Filtering', () => {
+			range((includingStartTime, includingEndTime) => {
+				const timingPoints = mockBeatmap.getTimingPointsInRange(firstTimingPoint.time, lastTimingPoint.time, includingStartTime, includingEndTime);
+
+				if((includingStartTime === undefined && includingEndTime === undefined)
+				|| (includingStartTime && includingEndTime)) expect(timingPoints.length).toBe(totalTimingPoint);
+				else if(includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(totalTimingPoint - 1);
+				else if(!includingStartTime && includingEndTime) expect(timingPoints.length).toBe(totalTimingPoint - 1);
+				else if(!includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(totalTimingPoint - 2);
+			});
+
+			range((includingStartTime, includingEndTime) => {
+				const timingPoints = mockBeatmap.getTimingPointsOutRange(firstTimingPoint.time, lastTimingPoint.time, includingStartTime, includingEndTime);
+
+				if((includingStartTime === undefined && includingEndTime === undefined)
+				|| (includingStartTime && includingEndTime)) expect(timingPoints.length).toBe(0);
+				else if(includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(1);
+				else if(!includingStartTime && includingEndTime) expect(timingPoints.length).toBe(1);
+				else if(!includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(2);
+			});
+
+			range((includingStartTime, includingEndTime) => {
+				const hitObjects = mockBeatmap.getHitObjectsInRange(firstHitObject.time, lastHitObject.time, includingStartTime, includingEndTime);
+
+				if((includingStartTime === undefined && includingEndTime === undefined)
+				|| (includingStartTime && includingEndTime)) expect(hitObjects.length).toBe(totalHitObject);
+				else if(includingStartTime && !includingEndTime) expect(hitObjects.length).toBe(totalHitObject - 1);
+				else if(!includingStartTime && includingEndTime) expect(hitObjects.length).toBe(totalHitObject - 1);
+				else if(!includingStartTime && !includingEndTime) expect(hitObjects.length).toBe(totalHitObject - 2);
+			});
+
+			range((includingStartTime, includingEndTime) => {
+				const hitObjects = mockBeatmap.getHitObjectsOutRange(firstHitObject.time, lastHitObject.time, includingStartTime, includingEndTime);
+
+				if((includingStartTime === undefined && includingEndTime === undefined)
+				|| (includingStartTime && includingEndTime)) expect(hitObjects.length).toBe(0);
+				else if(includingStartTime && !includingEndTime) expect(hitObjects.length).toBe(1);
+				else if(!includingStartTime && includingEndTime) expect(hitObjects.length).toBe(1);
+				else if(!includingStartTime && !includingEndTime) expect(hitObjects.length).toBe(2);
+			});
+		});
+
+		test('Add Single Timing Point', () => {
+			const newTimingPoint = new TimingPoint(lastTimingPoint.time + 1);
+
+			mockBeatmap.appendTimingPoint(newTimingPoint);
+
+			expect(mockBeatmap.timingPoints.length).toBe(totalTimingPoint + 1);
+			expect(mockBeatmap.timingPoints.slice(-1)[0].toString()).toBe(newTimingPoint.toString());
+		});
+
+		test('Add Multiple Timing Point', () => {
+			const newTimingPoints = Array.from({ length: 5 }, (v, i) => new TimingPoint(lastTimingPoint.time + i));
+
+			mockBeatmap.appendTimingPoints(newTimingPoints);
+
+			expect(mockBeatmap.timingPoints.length).toBe(totalTimingPoint + 5);
+		});
+
+		test('Replace Timing Point Section', () => {
+			const newTimingPoints = Array.from({ length: 5 }, (v, i) => new TimingPoint(i + 1));
+
+			mockBeatmap.replaceTimingPoints(newTimingPoints);
+
+			expect(mockBeatmap.timingPoints.length).toBe(5);
+		});
+	});
+	
+	describe('Beatmap Manipulater', () => {
+		const basePath = path.join(__dirname, '..');
+		const backupPath = path.join(basePath, 'Backup');
+
+		let mockBeatmapPath = path.join(__dirname, './beatmap.test.osu');
+		let mockBeatmap;
+		let mockBeatmapManipulater;
+
+		let templateBeatmapPath = path.join(__dirname, './beatmap.template.osu');
+		let templateBeatmapRawString;
+
+		beforeAll(() => {
+			templateBeatmapRawString = fs.readFileSync(templateBeatmapPath).toString();
+		});
+
+		beforeEach(() => {
+			fs.writeFileSync(mockBeatmapPath, templateBeatmapRawString);
+
+			mockBeatmapManipulater = new BeatmapManipulater(mockBeatmapPath);
+			mockBeatmap = mockBeatmapManipulater.beatmap;
+		});
+
+		afterAll(() => {
+			fs.rmdirSync(backupPath, { recursive: true });
+
+			fs.rmSync(mockBeatmapPath);
+		});
+
+		test('Allocate Backup Path', () => {
+			const mkdirSync = jest.spyOn(fs, 'mkdirSync');
+
+			expect(BeatmapManipulater.getBackupPath()).toBe(backupPath);
+			expect(BeatmapManipulater.getBackupPath('Test #1')).toBe(path.join(backupPath, 'Test #1'));
+			expect(BeatmapManipulater.getBackupPath('Test #1')).toBe(path.join(backupPath, 'Test #1'));
+			expect(BeatmapManipulater.getBackupPath('Test #2')).toBe(path.join(backupPath, 'Test #2'));
+			expect(mkdirSync).toHaveBeenCalledTimes(3);
+		});
+
+		test('Backup', () => {
+			const testPath = path.join(backupPath, path.parse(mockBeatmapPath).name);
+
+			mockBeatmapManipulater.backup();
+
+			expect(fs.existsSync(backupPath)).toBe(true);
+			expect(fs.existsSync(testPath)).toBe(true);
+
+			const backupFiles = fs.readdirSync(testPath);
+
+			expect(backupFiles.length).toBe(1);
+
+			const backupFilePath = path.join(testPath, backupFiles.pop());
+
+			expect(fs.existsSync(backupFilePath)).toBe(true);
+			expect(fs.readFileSync(backupFilePath).toString()).toBe(mockBeatmap.rawString);
+		});
+
+		test('Get Time Interpolated & Mapped Value', () => {
+			for(let i = 0; i <= 100; i++) {
+				expect(BeatmapManipulater.getTimeInterpolatedValue(i, 0, 100, 1, 2)).toBe(1 + i / 100);
+				expect(BeatmapManipulater.getTimeInterpolatedValue(i, 0, 100, 1, 2, false)).toBe(1 + i / 100);
+				expect(BeatmapManipulater.getTimeInterpolatedValue(i, 0, 100, 1, 2, true)).toBe(1 + Math.pow(i / 100, 3));
+			}
+		});
+
+		test('Next & Previous Navigating', () => {
+			let i;
+
+			for(i = 0; i < mockBeatmap.timingPoints.length; i++) {
+				const timingPoint = mockBeatmap.timingPoints[i];
+
+				const prevTimingPoint = mockBeatmap.timingPoints[i - 1];
+				const nextTimingPoint = mockBeatmap.timingPoints[i + 1];
+
+				expect(mockBeatmapManipulater.findPreviousTimingPoint(timingPoint.time)).toBe(prevTimingPoint === undefined ? null : prevTimingPoint);
+				expect(mockBeatmapManipulater.findNextTimingPoint(timingPoint.time)).toBe(nextTimingPoint === undefined ? null : nextTimingPoint);
+			}
+
+			for(i = 0; i < mockBeatmap.hitObjects.length; i++) {
+				const hitObject = mockBeatmap.hitObjects[i];
+
+				const prevHitObject = mockBeatmap.hitObjects[i - 1];
+				const nextHitObject = mockBeatmap.hitObjects[i + 1];
+
+				expect(mockBeatmapManipulater.findPreviousHitObject(hitObject.time)).toBe(prevHitObject === undefined ? null : prevHitObject);
+				expect(mockBeatmapManipulater.findNextHitObject(hitObject.time)).toBe(nextHitObject === undefined ? null : nextHitObject);
+			}
+
+			for(i = 0; i < mockBeatmap.timingPoints.length; i++) {
+				const timingPoint = mockBeatmap.timingPoints[i];
+
+				expect(mockBeatmapManipulater.findPreviousTimingPoint(timingPoint.time + 1, timingPoint.uninherited)).toBe(timingPoint);
+				expect(mockBeatmapManipulater.findPreviousTimingPoint(timingPoint.time + 1, timingPoint.uninherited, false)).toBe(timingPoint);
+				expect(mockBeatmapManipulater.findPreviousTimingPoint(timingPoint.time, timingPoint.uninherited, true)).toBe(timingPoint);
+				expect(mockBeatmapManipulater.findPreviousTimingPoint(timingPoint.time, 2, true)).toBe(null);
+
+				expect(mockBeatmapManipulater.findNextTimingPoint(timingPoint.time - 1, timingPoint.uninherited)).toBe(timingPoint);
+				expect(mockBeatmapManipulater.findNextTimingPoint(timingPoint.time - 1, timingPoint.uninherited, false)).toBe(timingPoint);
+				expect(mockBeatmapManipulater.findNextTimingPoint(timingPoint.time, timingPoint.uninherited, true)).toBe(timingPoint);
+				expect(mockBeatmapManipulater.findNextTimingPoint(timingPoint.time, 2, true)).toBe(null);
+			}
+		});
+
+		test('Get Percise Timing Data', () => {
+			const firstTimingPoint = mockBeatmap.timingPoints[0];
+			const firstHitObject = mockBeatmap.hitObjects[0];
+
+			const invalidTimingData = mockBeatmapManipulater.getDecimalTimingData(firstTimingPoint.time - 1)
+			const artificialTimingData = mockBeatmapManipulater.getDecimalTimingData(firstHitObject.time + 1);
+
+			expect(invalidTimingData).toBeNaN();
+			expect(artificialTimingData).not.toBeNaN();
+			expect(artificialTimingData.snap).toBe(16);
+			expect(artificialTimingData.time).toBeTruthy();
+			expect(artificialTimingData.beatLength.toNumber()).toBe(firstTimingPoint.beatLength);
+
+			for(let i in mockBeatmap.hitObjects) {
+				const hitObject = mockBeatmap.hitObjects[i];
+
+				const timingData = mockBeatmapManipulater.getDecimalTimingData(hitObject.time);
+
+				expect(timingData.snap === 12 || timingData.snap === 16).toBe(true);
+				expect(timingData.time.floor().toNumber()).toBe(hitObject.time);
+				expect(timingData.beatLength.toNumber()).toBe(firstTimingPoint.beatLength);
+			}
+		});
+
+		test('Get Snap Based Offset Time', () => {
+			let basisHitObject;
+			let targetHitObject;
+
+			for(let i in mockBeatmap.hitObjects) {
+				const hitObject = mockBeatmap.hitObjects[i];
+
+				const timingData = mockBeatmapManipulater.getDecimalTimingData(hitObject.time);
+
+				const nextHitObjectTime = timingData.time.add(timingData.beatLength).floor().toNumber();
+				const nextHitObject = mockBeatmap.getHitObjectsInRange(nextHitObjectTime, nextHitObjectTime);
+
+				if(nextHitObject.length > 0) {
+					basisHitObject = hitObject;
+					targetHitObject = nextHitObject.pop();
+					break;
+				}
+			}
+
+			expect(mockBeatmapManipulater.getSnapBasedOffsetTime(basisHitObject.time, 1)).toBe(targetHitObject.time);
+		});
+
+		test('Get Inheritable Properties', () => {
+			const timingPoints = mockBeatmap.timingPoints.slice(1);
+
+			for(let i = 0; i < timingPoints.length; i++) {
+				const timingPoint = timingPoints[i];
+
+				const nextTimingPoint = timingPoints[i + 1];
+
+				const hitObjects = mockBeatmap.getHitObjectsInRange(timingPoint.time, nextTimingPoint ? nextTimingPoint.time : Infinity, true, false);
+
+				for(let j in hitObjects) {
+					const hitObject = hitObjects[j];
+
+					expect(mockBeatmapManipulater.getInheritableBeatLength(hitObject.time)).toBe(timingPoint.beatLength);
+					expect(mockBeatmapManipulater.getInheritableVolume(hitObject.time)).toBe(timingPoint.volume);
+				}
+			}
+
+			expect(mockBeatmapManipulater.getInheritableBeatLength(timingPoints[0].time - 1)).toBe(-100);
+			expect(mockBeatmapManipulater.getInheritableVolume(timingPoints[0].time - 1)).toBe(100);
+		});
+
+		test('Overwrite', () => {
+			const startTime = mockBeatmap.hitObjects[0].time;
+			const endTime = mockBeatmap.hitObjects.slice(-1)[0].time;
+
+			matrix((p) => {
+				fs.writeFileSync(mockBeatmapPath, templateBeatmapRawString);
+
+				mockBeatmapManipulater = new BeatmapManipulater(mockBeatmapPath);
+				mockBeatmap = mockBeatmapManipulater.beatmap;
+
+				mockBeatmapManipulater.overwrite(startTime, endTime, p);
+
+				// TODO. Reduce complexity of overwrite function
+			});
+		});
+
+		test('Overwrite (Dense)', () => {
+			const startTime = mockBeatmap.hitObjects[0].time;
+			const endTime = mockBeatmap.hitObjects[1].time;
+
+			matrix((p) => {
+				fs.writeFileSync(mockBeatmapPath, templateBeatmapRawString);
+
+				mockBeatmapManipulater = new BeatmapManipulater(mockBeatmapPath);
+				mockBeatmap = mockBeatmapManipulater.beatmap;
+
+				p.isDense = true;
+
+				mockBeatmapManipulater.overwrite(startTime, endTime, p);
+
+				// TODO. Reduce complexity of overwrite function
+			});
+		});
+
+		test('Modify', () => {
+			const startTime = mockBeatmap.timingPoints[1].time;
+			const endTime = mockBeatmap.timingPoints.slice(-1)[0].time;
+
+			matrix((p) => {
+				fs.writeFileSync(mockBeatmapPath, templateBeatmapRawString);
+
+				mockBeatmapManipulater = new BeatmapManipulater(mockBeatmapPath);
+				mockBeatmap = mockBeatmapManipulater.beatmap;
+
+				mockBeatmapManipulater.modify(startTime, endTime, p);
+
+				// TODO. Do the comparison
+			});
+		});
+
+		test('Remove', () => {
+			const startTime = mockBeatmap.timingPoints[1].time;
+			const endTime = mockBeatmap.timingPoints.slice(-1)[0].time;
+
+			matrix((p) => {
+				fs.writeFileSync(mockBeatmapPath, templateBeatmapRawString);
+
+				mockBeatmapManipulater = new BeatmapManipulater(mockBeatmapPath);
+				mockBeatmap = mockBeatmapManipulater.beatmap;
+
+				mockBeatmapManipulater.remove(startTime, endTime, p);
+
+				// TODO. Do the comparison
+			});
+		});
+	});
+});
 
 function range(cb) {
 	const cases = [
+		{  },
 		{ includingStartTime: true, includingEndTime: true },
 		{ includingStartTime: true, includingEndTime: false },
 		{ includingStartTime: false, includingEndTime: true },
@@ -32,480 +451,50 @@ function range(cb) {
 	}
 }
 
-describe('Beatmap Module Unit Test', () => {
-	test('Timing Point', () => {
-		const timingPoint = TimingPoint.fromArray('1242,307.692307692308,4,1,0,70,1,0'.split(','));
-
-		expect(timingPoint).toBeInstanceOf(TimingPoint);
-		expect(timingPoint.time).toBe(1242);
-		expect(timingPoint.beatLength).toBe(307.692307692308);
-		expect(timingPoint.meter).toBe(4);
-		expect(timingPoint.sampleSet).toBe(1);
-		expect(timingPoint.sampleIndex).toBe(0);
-		expect(timingPoint.volume).toBe(70);
-		expect(timingPoint.uninherited).toBe(1);
-		expect(timingPoint.effects).toBe(0);
-		expect(timingPoint.toString()).toBe('1242,307.692307692308,4,1,0,70,1,0');
-	});
-
-	test('Hit Object', () => {
-		const hitObject = HitObject.fromArray('256,192,119190,1,8,0:0:0:0:'.split(','));
-
-		expect(hitObject).toBeInstanceOf(HitObject);
-		expect(hitObject.x).toBe(256);
-		expect(hitObject.y).toBe(192);
-		expect(hitObject.time).toBe(119190);
-		expect(hitObject.type).toBe(1);
-		expect(hitObject.hitSound).toBe(8);
-		expect(hitObject.extra).toBe('0:0:0:0:');
-		expect(hitObject.isNote()).toBe(true);
-		expect(hitObject.isBigNote()).toBe(false);
-		expect(hitObject.isDon()).toBe(false);
-		expect(hitObject.isKat()).toBe(true);
-		expect(hitObject.isSpinner()).toBe(false);
-		expect(hitObject.isSlider()).toBe(false);
-		expect(hitObject.toString()).toBe('256,192,119190,1,8,0:0:0:0:');
-	});
-
-	describe('Beatmap', () => {
-		let testBeatmapPath = path.join(__dirname, './beatmap.test.osu');
-		let testBeatmap;
-
-		let templateBeatmapPath = path.join(__dirname, './beatmap.template.osu');
-		let templateBeatmapRawString;
-
-		afterAll(() => {
-			fs.rmSync(testBeatmapPath);
-		});
-
-		describe('Parse Beatmap', () => {
-			test('Read Beatmap Template', () => {
-				templateBeatmapRawString = fs.readFileSync(templateBeatmapPath).toString();
-			});
-
-			test('Make Test Beatmap', () => {
-				fs.writeFileSync(testBeatmapPath, templateBeatmapRawString);
-			});
-
-			test('Parse Test Beatmap', () => {
-				testBeatmap = new Beatmap(testBeatmapPath);
-
-				expect(testBeatmap).toBeInstanceOf(Beatmap);
-				expect(testBeatmap.path).toBe(testBeatmapPath);
-				expect(testBeatmap.rawString).toBe(templateBeatmapRawString);
-				expect(testBeatmap.timingPoints.length).toBe(TIMING_POINT_COUNT);
-				expect(testBeatmap.hitObjects.length).toBe(HIT_OBJECT_COUNT);
-				expect(testBeatmap.timingPoints[0]).toBeInstanceOf(TimingPoint);
-				expect(testBeatmap.hitObjects[0]).toBeInstanceOf(HitObject);
-				expect(testBeatmap.timingPointStartIndex < testBeatmap.timingPointEndIndex).toBe(true);
-				expect(testBeatmap.hitObjectStartIndex < testBeatmap.hitObjectEndIndex).toBe(true);
-			});
-
-			test('Get Timing Points In Range', () => {
-				range((includingStartTime, includingEndTime) => {
-					const timingPoints = testBeatmap.getTimingPointsInRange(TIMING_POINT_RANGE_START, TIMING_POINT_RANGE_END, includingStartTime, includingEndTime);
-
-					expect(timingPoints).toBeInstanceOf(Array);
-
-					if(includingStartTime && includingEndTime) expect(timingPoints.length).toBe(TIMING_POINT_RANGE_LENGTH);
-					else if(includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(TIMING_POINT_RANGE_LENGTH - 1);
-					else if(!includingStartTime && includingEndTime) expect(timingPoints.length).toBe(TIMING_POINT_RANGE_LENGTH - 1);
-					else if(!includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(TIMING_POINT_RANGE_LENGTH - 2);
-
-					expect(timingPoints[0]).toBeInstanceOf(TimingPoint);
-				});
-			});
-
-			test('Get Hit Objects In Range', () => {
-				range((includingStartTime, includingEndTime) => {
-					const hitObjects = testBeatmap.getHitObjectsInRange(HIT_OBJECT_RANGE_START, HIT_OBJECT_RANGE_END, includingStartTime, includingEndTime);
-
-					expect(hitObjects).toBeInstanceOf(Array);
-
-					if(includingStartTime && includingEndTime) expect(hitObjects.length).toBe(HIT_OBJECT_RANGE_LENGTH);
-					else if(includingStartTime && !includingEndTime) expect(hitObjects.length).toBe(HIT_OBJECT_RANGE_LENGTH - 1);
-					else if(!includingStartTime && includingEndTime) expect(hitObjects.length).toBe(HIT_OBJECT_RANGE_LENGTH - 1);
-					else if(!includingStartTime && !includingEndTime) expect(hitObjects.length).toBe(HIT_OBJECT_RANGE_LENGTH - 2);
-
-					expect(hitObjects[0]).toBeInstanceOf(HitObject);
-				});
-			});
-
-			test('Get Timing Points Out Range', () => {
-				range((includingStartTime, includingEndTime) => {
-					const timingPoints = testBeatmap.getTimingPointsOutRange(TIMING_POINT_RANGE_START, TIMING_POINT_RANGE_END, includingStartTime, includingEndTime);
-
-					expect(timingPoints).toBeInstanceOf(Array);
-
-					if(includingStartTime && includingEndTime) expect(timingPoints.length).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH);
-					else if(includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH + 1);
-					else if(!includingStartTime && includingEndTime) expect(timingPoints.length).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH + 1);
-					else if(!includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH + 2);
-
-					expect(timingPoints[0]).toBeInstanceOf(TimingPoint);
-				});
-			});
-
-			test('Get Hit Objects Out Range', () => {
-				range((includingStartTime, includingEndTime) => {
-					const hitObjects = testBeatmap.getHitObjectsOutRange(HIT_OBJECT_RANGE_START, HIT_OBJECT_RANGE_END, includingStartTime, includingEndTime);
-
-					expect(hitObjects).toBeInstanceOf(Array);
-
-					if(includingStartTime && includingEndTime) expect(hitObjects.length).toBe(HIT_OBJECT_COUNT - HIT_OBJECT_RANGE_LENGTH);
-					else if(includingStartTime && !includingEndTime) expect(hitObjects.length).toBe(HIT_OBJECT_COUNT - HIT_OBJECT_RANGE_LENGTH + 1);
-					else if(!includingStartTime && includingEndTime) expect(hitObjects.length).toBe(HIT_OBJECT_COUNT - HIT_OBJECT_RANGE_LENGTH + 1);
-					else if(!includingStartTime && !includingEndTime) expect(hitObjects.length).toBe(HIT_OBJECT_COUNT - HIT_OBJECT_RANGE_LENGTH + 2);
-
-					expect(hitObjects[0]).toBeInstanceOf(HitObject);
-				});
-			});
-		});
-
-		describe('Basic Beatmap Manipulation', () => {
-			afterAll(() => {
-				fs.writeFileSync(testBeatmapPath, templateBeatmapRawString);
-
-				testBeatmap = new Beatmap(testBeatmapPath);
-			});
-
-			test('Add Single Timing Point', () => {
-				const newTimingPoint = new TimingPoint();
-
-				testBeatmap.appendTimingPoint(newTimingPoint);
-
-				expect(testBeatmap.timingPoints.length).toBe(TIMING_POINT_COUNT + 1);
-				expect(testBeatmap.timingPoints.filter(tp => tp.time === 0).pop()).toBeInstanceOf(TimingPoint);
-			});
-
-			test('Add Multiple Timing Point', () => {
-				const newTimingPoints = Array.from({ length: 5 }, (v, i) => new TimingPoint(i + 1));
-
-				testBeatmap.appendTimingPoints(newTimingPoints);
-
-				expect(testBeatmap.timingPoints.length).toBe(TIMING_POINT_COUNT + 1 + 5);
-				expect(testBeatmap.timingPoints.filter(tp => 0 < tp.time && tp.time <= 5).length).toBe(5);
-			});
-
-			test('Replace Timing Point Section', () => {
-				const newTimingPoints = Array.from({ length: 5 }, (v, i) => new TimingPoint(i + 1));
-
-				testBeatmap.replaceTimingPoints(newTimingPoints);
-
-				expect(testBeatmap.timingPoints.length).toBe(5);
-				expect(testBeatmap.timingPoints.filter(tp => tp.time <= 5).length).toBe(5);
-			});
-
-			test('Save Test Beatmap', () => {
-				testBeatmap.write();
-
-				const savedRawString = fs.readFileSync(testBeatmapPath).toString();
-
-				expect(savedRawString).not.toBe(templateBeatmapRawString);
-				expect(savedRawString).toBe(testBeatmap.rawString);
-			});
-		});
-
-		describe('Advanced Beatmap Manipulation', () => {
-			let backupPath = BeatmapManipulater.getBackupPath();
-			let beatmapManipulater;
-
-			function resetBeatmap() {
-				fs.writeFileSync(testBeatmapPath, templateBeatmapRawString);
-
-				beatmapManipulater = new BeatmapManipulater(testBeatmapPath);
-			}
-
-			beforeAll(() => {
-				resetBeatmap();
-			});
-
-			afterAll(() => {
-				fs.rmdirSync(backupPath, { recursive: true });
-			});
-
-			test('Backup Beatmap', () => {
-				const testBackupPath = path.join(backupPath, '/beatmap.test');
-
-				beatmapManipulater.backup();
-
-				expect(fs.existsSync(backupPath)).toBe(true);
-				expect(fs.existsSync(testBackupPath)).toBe(true);
-
-				const backupFiles = fs.readdirSync(testBackupPath);
-
-				expect(backupFiles.length).toBe(1);
-				expect(fs.readFileSync(path.join(testBackupPath, backupFiles.pop())).toString()).toBe(beatmapManipulater.beatmap.rawString);
-			});
-
-			test('Get Time Interpolated Value', () => {
-				const value = 25 + Math.PI;
-				const start = 10;
-				const end = 50;
-				const min = 1.5;
-				const max = 2.0;
-
-				expect(BeatmapManipulater.getTimeInterpolatedValue(value, start, end, min, max)).toBe(min + (max - min) * ((value - start) / (end - start)));
-				expect(BeatmapManipulater.getTimeInterpolatedValue(value, end, start, max, min)).toBe(max + (min - max) * ((value - end) / (start - end)));
-			});
-
-			test('Get Before 1/16 Time', () => {
-				expect(beatmapManipulater.getSnapBasedOffsetTime(ISOLATE_RANGE_START, -16)).toBe(ISOLATE_OFFSET_TIME);
-			});
-
-			describe('Overwrite', () => {
-				beforeEach(resetBeatmap);
-
-				test('Range Only', () => {
-					range((includingStartTime, includingEndTime) => {
-						resetBeatmap();
-
-						beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-							includingStartTime: includingStartTime,
-							includingEndTime: includingEndTime,
-							isIgnoreVelocity: true,
-							isIgnoreVolume: true
-						});
-
-						const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
-
-						if(includingStartTime && includingEndTime) expect(timingPoints.length).toBe(ISOLATE_RANGE_LENGTH);
-						else if(includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(ISOLATE_RANGE_LENGTH - 1);
-						else if(!includingStartTime && includingEndTime) expect(timingPoints.length).toBe(ISOLATE_RANGE_LENGTH - 1);
-						else if(!includingStartTime && !includingEndTime) expect(timingPoints.length).toBe(ISOLATE_RANGE_LENGTH - 2);
-
-						if(includingStartTime && includingEndTime) {
-							const timingPoint = timingPoints[0];
-
-							expect(timingPoint).toBeTruthy();
-							expect(timingPoint).toBeInstanceOf(TimingPoint);
-							expect(timingPoint.beatLength).toBe(ISOLATE_PREVIOUS_BEAT_LENGTH);
-							expect(timingPoint.volume).toBe(ISOLATE_PREVIOUS_VOLUME);
-						}
-					});
-				});
-
-				test('Velocity Only', () => {
-					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-						startVelocity: 1.0,
-						endVelocity: 2.0,
-						isIgnoreVolume: true
-					});
-
-					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
-
-					for(let i in timingPoints) {
-						const timingPoint = timingPoints[i];
-
-						expect(timingPoint.beatLength).toBe(parseFloat((-100 / BeatmapManipulater.getTimeInterpolatedValue(timingPoint.time, ISOLATE_RANGE_START, ISOLATE_RANGE_END, 1.0, 2.0)).toFixed(12)));
-						expect(timingPoint.volume).toBe(ISOLATE_PREVIOUS_VOLUME);
-					}
-				});
-
-				test('Volume Only', () => {
-					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-						startVolume: 90,
-						endVolume: 40,
-						isIgnoreVelocity: true
-					});
-
-					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
-
-					for(let i in timingPoints) {
-						const timingPoint = timingPoints[i];
-
-						expect(timingPoint.beatLength).toBe(ISOLATE_PREVIOUS_BEAT_LENGTH);
-						expect(timingPoint.volume).toBe(Math.round(BeatmapManipulater.getTimeInterpolatedValue(timingPoint.time, ISOLATE_RANGE_START, ISOLATE_RANGE_END, 90, 40)));
-					}
-				});
-
-				test('Velocity & Volume', () => {
-					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-						startVelocity: 1.0,
-						startVolume: 90,
-						endVelocity: 2.0,
-						endVolume: 40
-					});
-
-					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
-
-					for(let i in timingPoints) {
-						const timingPoint = timingPoints[i];
-
-						expect(timingPoint.beatLength).toBe(parseFloat((-100 / BeatmapManipulater.getTimeInterpolatedValue(timingPoint.time, ISOLATE_RANGE_START, ISOLATE_RANGE_END, 1.0, 2.0)).toFixed(12)));
-						expect(timingPoint.volume).toBe(Math.round(BeatmapManipulater.getTimeInterpolatedValue(timingPoint.time, ISOLATE_RANGE_START, ISOLATE_RANGE_END, 90, 40)));
-					}
-				});
-
-				test('Velocity & Volume & Kiai', () => {
-					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-						startVelocity: 1.0,
-						startVolume: 90,
-						endVelocity: 2.0,
-						endVolume: 40,
-						isKiai: true
-					});
-
-					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
-
-					for(let i in timingPoints) {
-						const timingPoint = timingPoints[i];
-
-						expect(timingPoint.effects).toBe(1);
-					}
-				});
-
-				test('Velocity & Volume & Offset', () => {
-					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-						startVelocity: 1.0,
-						startVolume: 90,
-						endVelocity: 2.0,
-						endVolume: 40,
-						isOffset: true
-					});
-
-					const startOffset = beatmapManipulater.getSnapBasedOffsetTime(ISOLATE_RANGE_START, -16);
-					const endOffset = beatmapManipulater.getSnapBasedOffsetTime(ISOLATE_RANGE_END, -16);
-
-					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(startOffset, endOffset);
-					const hitObjects = beatmapManipulater.beatmap.getHitObjectsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
-
-					expect(timingPoints.length).toBe(ISOLATE_RANGE_LENGTH);
-					expect(timingPoints.length).toBe(hitObjects.length);
-
-					for(let i in timingPoints) {
-						const timingPoint = timingPoints[i];
-						const timingPointOffsetTime = beatmapManipulater.getSnapBasedOffsetTime(timingPoint.time, 16);
-
-						const matchedHitObject = beatmapManipulater.beatmap.getHitObjectsInRange(timingPointOffsetTime, timingPointOffsetTime);
-
-						expect(matchedHitObject.length).toBe(1);
-						expect(matchedHitObject[0].time).toBe(timingPointOffsetTime);
-					}
-				});
-
-				test('Velocity & Volume & Dense', () => {
-					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-						startVelocity: 1.0,
-						startVolume: 90,
-						endVelocity: 2.0,
-						endVolume: 40,
-						isDense: true
-					});
-
-					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
-
-					for(let i = 0; i < timingPoints.length - 1; i++) {
-						const currentTimingPoint = timingPoints[i];
-						const nextTimingPoint = timingPoints[i + 1];
-
-						expect(beatmapManipulater.getSnapBasedOffsetTime(currentTimingPoint.time, 16)).toBe(nextTimingPoint.time);
-					}
-				});
-
-				test('Kiai & Offset & Dense', () => {
-					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-						isKiai: true,
-						isOffset: true,
-						isDense: true,
-						isIgnoreVelocity: true,
-						isIgnoreVolume: true
-					});
-
-					const startOffset = beatmapManipulater.getSnapBasedOffsetTime(ISOLATE_RANGE_START, -16);
-					const endOffset = beatmapManipulater.getSnapBasedOffsetTime(ISOLATE_RANGE_END, -16);
-
-					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(startOffset, endOffset);
-
-					for(let i = 0; i < timingPoints.length; i++) {
-						const currentTimingPoint = timingPoints[i];
-
-						expect(currentTimingPoint.beatLength).toBe(ISOLATE_PREVIOUS_BEAT_LENGTH);
-						expect(currentTimingPoint.volume).toBe(ISOLATE_PREVIOUS_VOLUME);
-						expect(currentTimingPoint.effects).toBe(1);
-
-						if(i < timingPoints.length - 1) {
-							const nextTimingPoint = timingPoints[i + 1];
-
-							expect(beatmapManipulater.getSnapBasedOffsetTime(currentTimingPoint.time, 16)).toBe(nextTimingPoint.time);
-						}
-					}
-				});
-
-				test('Velocity & Volume & Kiai & Offset', () => {
-					beatmapManipulater.overwrite(ISOLATE_RANGE_START, ISOLATE_RANGE_END, {
-						startVelocity: 1.0,
-						startVolume: 90,
-						endVelocity: 2.0,
-						endVolume: 40,
-						isKiai: true,
-						isOffset: true
-					});
-
-					const startOffset = beatmapManipulater.getSnapBasedOffsetTime(ISOLATE_RANGE_START, -16);
-					const endOffset = beatmapManipulater.getSnapBasedOffsetTime(ISOLATE_RANGE_END, -16);
-
-					const timingPoints = beatmapManipulater.beatmap.getTimingPointsInRange(startOffset, endOffset);
-					const hitObjects = beatmapManipulater.beatmap.getHitObjectsInRange(ISOLATE_RANGE_START, ISOLATE_RANGE_END);
-
-					expect(timingPoints.length).toBe(ISOLATE_RANGE_LENGTH);
-					expect(timingPoints.length).toBe(hitObjects.length);
-
-					for(let i = 0; i < timingPoints.length; i++) {
-						const timingPoint = timingPoints[i];
-						const timingPointOffsetTime = beatmapManipulater.getSnapBasedOffsetTime(timingPoint.time, 16);
-
-						const matchedHitObject = beatmapManipulater.beatmap.getHitObjectsInRange(timingPointOffsetTime, timingPointOffsetTime);
-
-						expect(matchedHitObject.length).toBe(1);
-						expect(matchedHitObject[0].time).toBe(timingPointOffsetTime);
-
-						expect(timingPoint.beatLength).toBe(parseFloat((-100 / BeatmapManipulater.getTimeInterpolatedValue(timingPointOffsetTime, ISOLATE_RANGE_START, ISOLATE_RANGE_END, 1.0, 2.0)).toFixed(12)));
-						expect(timingPoint.volume).toBe(Math.round(BeatmapManipulater.getTimeInterpolatedValue(timingPointOffsetTime, ISOLATE_RANGE_START, ISOLATE_RANGE_END, 90, 40)));
-						expect(timingPoint.effects).toBe(1);
-					}
-				});
-			})
-
-			describe('Remove', () => {
-				beforeEach(resetBeatmap);
-
-				test('Range Only', () => {
-					range((includingStartTime, includingEndTime) => {
-						resetBeatmap();
-
-						beatmapManipulater.remove(TIMING_POINT_RANGE_START, TIMING_POINT_RANGE_END, {
-							includingStartTime: includingStartTime,
-							includingEndTime: includingEndTime,
-							isOffset: false
-						});
-
-						const timingPointsLength = beatmapManipulater.beatmap.timingPoints.length;
-
-						if(includingStartTime && includingEndTime) expect(timingPointsLength).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH);
-						else if(includingStartTime && !includingEndTime) expect(timingPointsLength).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH + 1);
-						else if(!includingStartTime && includingEndTime) expect(timingPointsLength).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH + 1);
-						else if(!includingStartTime && !includingEndTime) expect(timingPointsLength).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH + 2);
-					});
-				});
-
-				test('Offset Only', () => {
-					beatmapManipulater.remove(TIMING_POINT_RANGE_START, TIMING_POINT_RANGE_END, {
-						isOffset: true
-					});
-
-					const startOffset = beatmapManipulater.getSnapBasedOffsetTime(TIMING_POINT_RANGE_START, -16);
-					const endOffset = beatmapManipulater.getSnapBasedOffsetTime(TIMING_POINT_RANGE_END, -16);
-
-					const timingPointsLength = beatmapManipulater.beatmap.timingPoints.length;
-					const timingPointsInRange = beatmapManipulater.beatmap.getTimingPointsInRange(TIMING_POINT_RANGE_START, TIMING_POINT_RANGE_END);
-					const timingPointsInOffsetRange = beatmapManipulater.beatmap.getTimingPointsInRange(startOffset, endOffset);
-
-					expect(timingPointsLength).toBe(TIMING_POINT_COUNT - TIMING_POINT_RANGE_LENGTH + 1);
-					expect(timingPointsInRange.length).toBe(1);
-					expect(timingPointsInOffsetRange.length).toBe(0);
-				});
-			});
-		});
-	});
-});
+function matrix(cb) {
+	const cases = {
+		startVelocity: [ 1.0, 2.0 ],
+		startVolume: [ 100, 0 ],
+		endVelocity: [ 2.0, 1.0 ],
+		endVolume: [ 0, 100 ],
+		includingStartTime: [ true, false ],
+		includingEndTime: [ true, false ],
+		isKiai: [ false, true ],
+		isOffset: [ false, true ],
+		isOffsetPrecise: [ false, true ],
+		isExponential: [ false, true ],
+		isIgnoreVelocity: [ false, true ],
+		isIgnoreVolume: [ false, true ],
+		isBackup: [ false, true ]
+	};
+
+	const caseKeys = Object.keys(cases);
+	const caseLength = caseKeys.length;
+
+	const reducer = (index) => (acc, key) => {
+		acc[key] = cases[key][index];
+
+		return acc;
+	};
+
+	for(let i = 0; i < caseLength; i++) {
+		const parameter = caseKeys.reduce(reducer(0), {});
+
+		if(i === 0) {
+			cb(parameter);
+		}
+
+		for(let j = 0; j < caseLength; j++) {
+			if(i === j)
+				continue;
+
+			parameter[caseKeys[j]] = cases[caseKeys[j]][1];
+
+			cb(parameter);
+		}
+
+		if(i === caseLength - 1) {
+			cb(caseKeys.reduce(reducer(1), {}));
+		}
+	}
+}

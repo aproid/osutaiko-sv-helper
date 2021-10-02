@@ -3,7 +3,7 @@ const moment = require('moment');
 const path = require('path');
 const fs = require('fs');
 
-const { __DEV__, __TEST__ } = require('./env');
+const { __DEV__, __TEST__, __DIR__ } = require('./env');
 const { Regex } = require('./regex');
 const { parseIntSafely, parseFloatSafely, parseTimeSafely } = require('./type');
 const { between } = require('./util');
@@ -131,7 +131,7 @@ class BeatmapManipulater {
 		this.beatmap = new Beatmap(beatmapPath);
 	}
 
-	overwrite(startTime, endTime, options={}) {
+	overwrite(startTime, endTime, options) {
 		const self = this.constructor;
 
 		const timingPoints = [];
@@ -169,7 +169,7 @@ class BeatmapManipulater {
 						const nextHitObject = this.findNextHitObject(hitObject.time);
 
 						const prevTimingData = prevHitObject !== null ? this.getDecimalTimingData(prevHitObject.time) : null;
-						const nextTimingData = prevHitObject !== null ? this.getDecimalTimingData(nextHitObject.time) : null;
+						const nextTimingData = nextHitObject !== null ? this.getDecimalTimingData(nextHitObject.time) : null;
 
 						const isOddAdjacent = (prevTimingData !== null && prevTimingData.time.floor().toNumber() >= timingData.time.sub(intervalTri).floor().toNumber() && prevTimingData.snap === 12)
 										   || (nextTimingData !== null && nextTimingData.time.floor().toNumber() <= timingData.time.add(intervalTri).floor().toNumber() && nextTimingData.snap === 12);
@@ -194,7 +194,7 @@ class BeatmapManipulater {
 		this.beatmap.write();
 	}
 
-	modify(startTime, endTime, options={}) {
+	modify(startTime, endTime, options) {
 		const self = this.constructor;
 		
 		if(options.isOffset) {
@@ -215,7 +215,7 @@ class BeatmapManipulater {
 		this.beatmap.write();
 	}
 
-	remove(startTime, endTime, options={}) {
+	remove(startTime, endTime, options) {
 		if(options.isOffset) {
 			startTime = this.getSnapBasedOffsetTime(startTime, options.isOffsetPrecise ? -12 : -16);
 			endTime = this.getSnapBasedOffsetTime(endTime, -16);
@@ -235,7 +235,7 @@ class BeatmapManipulater {
 
 		const backupPath = self.getBackupPath(backupBaseName);
 
-		fs.writeFileSync(`${backupPath}\\${backupName}`, this.beatmap.rawString);
+		fs.writeFileSync(path.join(backupPath, backupName), this.beatmap.rawString);
 	}
 
 	findPreviousTimingPoint(time, inheritType=-1, includingCurrentTime=false) {
@@ -252,7 +252,7 @@ class BeatmapManipulater {
 	}
 
 	findNextTimingPoint(time, inheritType=-1, includingCurrentTime=false) {
-		const timingPoints = this.beatmap.getTimingPointsInRange(time, -Infinity, includingCurrentTime, true);
+		const timingPoints = this.beatmap.getTimingPointsInRange(time, Infinity, includingCurrentTime, true);
 
 		for(let i = 0; i < timingPoints.length; i++) {
 			const timingPoint = timingPoints[i];
@@ -354,17 +354,17 @@ class BeatmapManipulater {
 	static getTimeInterpolatedValue(cTime, sTime, eTime, sValue, eValue, isExponential=false) {
 		const progress = (cTime - sTime) / (eTime - sTime);
 
-		return (((isExponential ? Math.pow(2, 10 * progress - 10) : progress) * (eValue - sValue)) + sValue);
+		return (((isExponential ? Math.pow(progress, 3) : progress) * (eValue - sValue)) + sValue);
 	}
 
 	static getBackupPath(beatmapName=null) {
-		const backupPath = path.join(__DEV__ || __TEST__ ? path.join(__dirname, '..') : process.env.PORTABLE_EXECUTABLE_DIR, 'Backup');
+		const backupPath = path.join(__DIR__, 'Backup');
 
 		if(!fs.existsSync(backupPath))
 			fs.mkdirSync(backupPath);
 
 		if(beatmapName && beatmapName !== null) {
-			const childPath = `${backupPath}\\${beatmapName}`;
+			const childPath = path.join(backupPath, beatmapName);
 
 			if(!fs.existsSync(childPath))
 				fs.mkdirSync(childPath);
@@ -451,12 +451,12 @@ class HitObject {
 		].join(',');
 	}
 
-	isNote()	{ return this.type === 0 || this.type === 1 || this.type === 5 }
-	isSlider()	{ return this.type === 2 || this.type === 6 }
-	isSpinner()	{ return this.type === 8 || this.type === 12 }
-	isKat()		{ return this.hitSound === 2 || this.hitSound === 6 || this.hitSound === 8 || this.hitSound === 12 }
-	isDon()		{ return this.hitSound === 0 || this.hitSound === 4 }
-	isBigNote()	{ return this.hitSound === 4 || this.hitSound === 6 || this.hitSound === 12 }
+	isNote()	{ return this.type === 0 || this.type === 1 || this.type === 5; }
+	isSlider()	{ return this.type === 2 || this.type === 6; }
+	isSpinner()	{ return this.type === 8 || this.type === 12; }
+	isKat()		{ return this.hitSound === 2 || this.hitSound === 6 || this.hitSound === 8 || this.hitSound === 12; }
+	isDon()		{ return this.hitSound === 0 || this.hitSound === 4; }
+	isBigNote()	{ return this.hitSound === 4 || this.hitSound === 6 || this.hitSound === 12; }
 }
 
 module.exports = {
