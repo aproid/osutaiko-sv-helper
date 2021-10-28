@@ -43,6 +43,9 @@ let $modifyButton;
 let $removeButton;
 let $backupButton;
 let $modeToggler;
+let $swapTime;
+let $swapVelocity;
+let $swapVolume;
 
 describe('Front-End Unit Test', () => {
 	describe('Storage', () => {
@@ -361,6 +364,29 @@ describe('Front-End Unit Test', () => {
 			expect($endPointVolume.disabled).toBe(false);
 		});
 
+		test('Swap Button', () => {
+			$startPointTime.value = '00:00:100';
+			$endPointTime.value = '00:00:200';
+			$swapTime.click();
+
+			expect($startPointTime.value).toBe('00:00:200');
+			expect($endPointTime.value).toBe('00:00:100');
+
+			$startPointVelocity.value = '1';
+			$endPointVelocity.value = '2';
+			$swapVelocity.click();
+
+			expect($startPointVelocity.value).toBe('2');
+			expect($endPointVelocity.value).toBe('1');
+
+			$startPointVolume.value = '100';
+			$endPointVolume.value = '0';
+			$swapVolume.click();
+
+			expect($startPointVolume.value).toBe('0');
+			expect($endPointVolume.value).toBe('100');
+		});
+
 		test('Overwrite Button', () => {
 			matrix((p) => {
 				$overwriteButton.click();
@@ -553,6 +579,9 @@ function render() {
 	$removeButton = document.querySelector('.btn-remove');
 	$backupButton = document.querySelector('.btn-backup');
 	$modeToggler = document.querySelector('.mode-toggler');
+	$swapTime = document.querySelector('.swap-time');
+	$swapVelocity = document.querySelector('.swap-velocity');
+	$swapVolume = document.querySelector('.swap-volume');
 }
 
 function matrix(cb) {
