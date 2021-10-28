@@ -231,6 +231,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	const $modeToggler = document.querySelector('.mode-toggler');
 
+	const $swapTime = document.querySelector('.swap-time');
+	const $swapVelocity = document.querySelector('.swap-velocity');
+	const $swapVolume = document.querySelector('.swap-volume');
+
 	$closeButton.addEventListener('click', onCloseClick);
 
 	$overwriteButton.addEventListener('click', onOverwriteClick);
@@ -243,10 +247,14 @@ window.addEventListener('DOMContentLoaded', () => {
 	$optionIgnoreVelocity.addEventListener('change', onIgnoreVelocityChange);
 	$optionIgnoreVolume.addEventListener('change', onIgnoreVolumeChange);
 
+	$modeToggler.addEventListener('click', onModeTogglerClick);
+
+	$swapTime.addEventListener('click', onSwapTimeButtonClick);
+	$swapVelocity.addEventListener('click', onSwapVelocityButtonClick);
+	$swapVolume.addEventListener('click', onSwapVolumeButtonClick);
+
 	profileUI.onSave = getInputDatas;
 	profileUI.onLoad = setInputDatas;
-
-	$modeToggler.addEventListener('click', onModeTogglerClick);
 
 	Storage.getAccess((storage) => {
 		if(storage.mode) {
@@ -455,6 +463,18 @@ window.addEventListener('DOMContentLoaded', () => {
 		} else {
 			setMode('basic');
 		}
+	}
+
+	function onSwapTimeButtonClick() {
+		[$startPointTime.value, $endPointTime.value] = [$endPointTime.value, $startPointTime.value];
+	}
+
+	function onSwapVelocityButtonClick() {
+		[$startPointVelocity.value, $endPointVelocity.value] = [$endPointVelocity.value, $startPointVelocity.value];
+	}
+
+	function onSwapVolumeButtonClick() {
+		[$startPointVolume.value, $endPointVolume.value] = [$endPointVolume.value, $startPointVolume.value];
 	}
 });
 

@@ -290,3 +290,22 @@ input::-webkit-input-placeholder {
 .mode-advanced .mode-item-advanced {
 	display: block;
 }
+
+.swap {
+	padding: 14px 0 0;
+	display: flex;
+	flex-direction: column;
+}
+.swap-btn {
+	border-radius: 2px;
+	margin: 7px 0 0;
+	padding: 0 4px;
+	height: 25px;
+	background: var(--color-highlight);
+	cursor: pointer;
+}
+.swap-btn img {
+	vertical-align: middle;
+	filter: invert(1);
+	width: 14px;
+}
